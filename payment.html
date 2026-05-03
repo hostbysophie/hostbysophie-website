@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Payment · Host By Sophie</title>
+  <meta name="description" content="Secure online payment for your booking, concierge service or owner invoice." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="assets/styles.css" />
+
+  <style>
+    .pay-wrap { max-width: 1000px; margin: 0 auto; padding: 60px 24px 80px; }
+    .pay-grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 40px; align-items: start; }
+    @media (max-width: 880px) { .pay-grid { grid-template-columns: 1fr; } }
+
+    .pay-card, .summary-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 36px 36px 32px;
+      border-top: 4px solid var(--gold);
+    }
+    .summary-card { border-top-color: var(--coral); position: sticky; top: 90px; }
+
+    .amount-display {
+      text-align: center;
+      padding: 20px; margin: 16px 0 24px;
+      background: var(--sand); border-radius: 12px;
+    }
+    .amount-display .lbl { font-size: .75rem; letter-spacing: .15em; text-transform: uppercase; color: var(--ink-soft); }
+    .amount-display .val { font-family: var(--serif); font-size: 2.6rem; color: var(--ocean); line-height: 1; margin-top: 6px; }
+    .amount-display .cur { font-size: 1.2rem; color: var(--gold); }
+
+    .type-switch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: var(--sand); padding: 6px; border-radius: 999px; margin-bottom: 22px; }
+    .type-switch button {
+      background: transparent; border: none; padding: 10px; border-radius: 999px;
+      font-family: var(--sans); font-size: .85rem; font-weight: 600; color: var(--ink-soft); cursor: pointer;
+      transition: all .2s;
+    }
+    .type-switch button.on { background: var(--white); color: var(--ocean); box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+
+    .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .pay-badge { display: flex; gap: 10px; align-items: center; justify-content: center; color: var(--ink-soft); font-size: .8rem; margin-top: 20px; }
+    .pay-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: #2F8F54; }
+
+    .summary-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: .92rem; }
+    .summary-row:last-of-type { border: none; }
+    .summary-row.total { font-family: var(--serif); font-size: 1.3rem; color: var(--ocean); padding-top: 16px; }
+    .summary-row strong { color: var(--ink); }
+
+    .logos-row { display: flex; gap: 18px; margin-top: 14px; align-items: center; flex-wrap: wrap; }
+    .brand-logo { padding: 6px 14px; background: var(--sand); border-radius: 6px; font-weight: 700; font-size: .78rem; letter-spacing: .1em; color: var(--ocean); }
+  </style>
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Host By <span>Sophie</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="index.html#services">Services</a></li>
+        <li><a href="index.html#contact">Contact</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="index.html" class="btn btn-ghost">Back to site</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="pay-wrap">
+
+    <div style="text-align: center; margin-bottom: 40px;">
+      <span class="eyebrow">Secure Payment</span>
+      <h1 style="font-size: 2.4rem; margin-top: 6px;">Complete your payment</h1>
+      <p style="max-width: 560px; margin: 0 auto;">All transactions are processed through a PCI-compliant payment gateway. Your card details never touch our servers.</p>
+    </div>
+
+    <div class="pay-grid">
+
+      <!-- ============== FORM ============== -->
+      <section class="pay-card">
+
+        <div class="type-switch" role="tablist">
+          <button class="on" data-type="booking" onclick="setType(event, 'booking')">Booking</button>
+          <button data-type="concierge" onclick="setType(event, 'concierge')">Concierge</button>
+          <button data-type="invoice" onclick="setType(event, 'invoice')">Owner Invoice</button>
+        </div>
+
+        <form id="payForm" onsubmit="handlePay(event)">
+
+          <div>
+            <label for="payName">Full name</label>
+            <input id="payName" type="text" required placeholder="As it appears on your card" />
+          </div>
+
+          <div>
+            <label for="payEmail">Email for receipt</label>
+            <input id="payEmail" type="email" required placeholder="you@example.com" />
+          </div>
+
+          <div>
+            <label for="payRef">Reference <span style="font-weight:400; color:var(--ink-soft);">(booking ID or invoice no.)</span></label>
+            <input id="payRef" type="text" placeholder="e.g. HBS-2026-0412" />
+          </div>
+
+          <div>
+            <label for="payAmount">Amount (USD)</label>
+            <input id="payAmount" type="number" min="1" step="0.01" required value="850.00" oninput="updateSummary()" />
+          </div>
+
+          <div class="amount-display">
+            <div class="lbl">You will pay</div>
+            <div class="val"><span class="cur">$</span><span id="amtEcho">850.00</span></div>
+          </div>
+
+          <h3 style="font-family:var(--sans); font-size:.95rem; font-weight:600; letter-spacing:.05em; text-transform:uppercase; color:var(--ink); margin: 8px 0 14px;">Card details</h3>
+
+          <div>
+            <label for="cardNum">Card number</label>
+            <input id="cardNum" type="text" maxlength="19" placeholder="1234 5678 9012 3456" inputmode="numeric" required />
+          </div>
+
+          <div class="card-row">
+            <div>
+              <label for="cardExp">Expiry</label>
+              <input id="cardExp" type="text" maxlength="5" placeholder="MM/YY" required />
+            </div>
+            <div>
+              <label for="cardCvc">CVC</label>
+              <input id="cardCvc" type="text" maxlength="4" placeholder="123" inputmode="numeric" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary" style="margin-top: 18px; width: 100%;">Pay securely</button>
+
+          <div class="pay-badge">
+            <span class="dot"></span>
+            <span>256-bit SSL · PCI-DSS compliant · Powered by Stripe (demo)</span>
+          </div>
+        </form>
+      </section>
+
+      <!-- ============== SUMMARY ============== -->
+      <aside class="summary-card">
+        <span class="eyebrow" style="color:var(--coral);">Order summary</span>
+        <h2 id="summaryTitle" style="font-size: 1.4rem; margin-top: 4px;">Booking payment</h2>
+        <p id="summaryDesc" style="font-size:.9rem;">Deposit or balance payment for your Aruba vacation rental.</p>
+
+        <div style="margin-top: 20px;">
+          <div class="summary-row"><span>Subtotal</span><strong id="sumSub">$850.00</strong></div>
+          <div class="summary-row"><span>Processing fee (2.9% + $0.30)</span><strong id="sumFee">$24.95</strong></div>
+          <div class="summary-row total"><span>Total</span><strong id="sumTotal">$874.95</strong></div>
+        </div>
+
+        <div style="margin-top: 28px;">
+          <h4 style="font-size:.8rem; letter-spacing:.1em; text-transform:uppercase; color:var(--ink); font-family:var(--sans); margin: 0 0 10px;">We accept</h4>
+          <div class="logos-row">
+            <span class="brand-logo">VISA</span>
+            <span class="brand-logo">MASTERCARD</span>
+            <span class="brand-logo">AMEX</span>
+            <span class="brand-logo">APPLE PAY</span>
+          </div>
+        </div>
+
+        <div style="margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line);">
+          <p style="font-size:.82rem; margin: 0;"><strong style="color:var(--ink);">Need help?</strong> Call us at <a href="tel:+2975931874">+297 593 18 74</a> or email <a href="mailto:hostbysophie@gmail.com">hostbysophie@gmail.com</a>.</p>
+        </div>
+      </aside>
+
+    </div>
+  </main>
+
+  <script>
+    const labels = {
+      booking:   { title: 'Booking payment',   desc: 'Deposit or balance payment for your Aruba vacation rental.' },
+      concierge: { title: 'Concierge service', desc: 'Airport transfer, groceries, tours, chef and more.' },
+      invoice:   { title: 'Owner invoice',     desc: 'Management fee, maintenance or other invoiced service.' }
+    };
+
+    function setType(e, t) {
+      document.querySelectorAll('.type-switch button').forEach(b => b.classList.remove('on'));
+      e.target.classList.add('on');
+      document.getElementById('summaryTitle').textContent = labels[t].title;
+      document.getElementById('summaryDesc').textContent  = labels[t].desc;
+    }
+
+    function updateSummary() {
+      const amt = parseFloat(document.getElementById('payAmount').value) || 0;
+      const fee = amt * 0.029 + 0.30;
+      document.getElementById('amtEcho').textContent = amt.toFixed(2);
+      document.getElementById('sumSub').textContent   = '$' + amt.toFixed(2);
+      document.getElementById('sumFee').textContent   = '$' + fee.toFixed(2);
+      document.getElementById('sumTotal').textContent = '$' + (amt + fee).toFixed(2);
+    }
+
+    // Card number formatting
+    document.getElementById('cardNum').addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '').slice(0, 16);
+      e.target.value = v.replace(/(.{4})/g, '$1 ').trim();
+    });
+    document.getElementById('cardExp').addEventListener('input', (e) => {
+      let v = e.target.value.replace(/\D/g, '').slice(0, 4);
+      if (v.length >= 3) v = v.slice(0, 2) + '/' + v.slice(2);
+      e.target.value = v;
+    });
+
+    function handlePay(e) {
+      e.preventDefault();
+      const amt = document.getElementById('payAmount').value;
+      alert('✓ Payment of $' + parseFloat(amt).toFixed(2) + ' confirmed (demo).\n\nA receipt will be sent to ' + document.getElementById('payEmail').value + '.\n\nThank you for choosing Host By Sophie.');
+    }
+
+    updateSummary();
+  </script>
+
+</body>
+</html>

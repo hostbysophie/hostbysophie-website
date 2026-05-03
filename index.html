@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Host By Sophie — Boutique Vacation Rental Management in Aruba</title>
+  <meta name="description" content="Boutique vacation rental and property management agency in Santa Cruz, Aruba. Full rental management, 5-star concierge, maintenance and monthly reports. Quality over quantity." />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Host By Sophie — Boutique Property Management, Aruba" />
+  <meta property="og:description" content="Trusted local expert for vacation rental management in Aruba. Personal, meticulous, responsive." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://hostbysophie.com/" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon-192x192.png" />
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="assets/styles.css" />
+</head>
+<body>
+
+  <!-- ============================== NAV ============================== -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#home" class="logo">
+        <img src="assets/Logo.png" alt="Host By Sophie" class="logo-img" />
+        <span class="logo-text">Host By <span>Sophie</span></span>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#services">Services</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="#portfolio">Properties</a></li>
+        <li><a href="#reviews">Reviews</a></li>
+        <li><a href="#contact">Contact</a></li>
+        <li><a href="portal.html">Owner Portal</a></li>
+        <li><a href="sign.html">✍ Sign</a></li>
+      </ul>
+
+      <div class="nav-cta">
+        <a href="payment.html" class="btn btn-primary">Book / Pay</a>
+        <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ============================== HERO ============================== -->
+  <header class="hero" id="home">
+    <div class="hero-content">
+      <span class="eyebrow">Santa Cruz · Aruba</span>
+      <h1>A <em>trusted local expert</em> for your Aruba property.</h1>
+      <p class="hero-sub">Boutique vacation rental management and 5-star concierge, run personally by Sophie and Stéphane. Quality over quantity — every property cared for like our own.</p>
+      <div class="hero-actions">
+        <a href="#services" class="btn btn-primary">Discover our services</a>
+        <a href="#contact" class="btn btn-ghost" style="color:#fff; border-color:#fff;">Request a consultation</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============================== SERVICES ============================== -->
+  <section id="services">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">What we do</span>
+        <h2>Full-service property care, a single trusted contact.</h2>
+        <p>From guest booking to monthly reports, we handle the entire lifecycle so owners can enjoy their investment — not manage it.</p>
+      </div>
+
+      <div class="services-grid">
+        <div class="service-card reveal">
+          <div class="service-icon">&#9733;</div>
+          <h3>Full Rental Management</h3>
+          <p>Listing, pricing strategy, calendar sync, guest vetting, check-in/out — handled end-to-end across Airbnb, Booking and direct channels.</p>
+        </div>
+
+        <div class="service-card reveal">
+          <div class="service-icon">&#10084;</div>
+          <h3>5-Star Concierge</h3>
+          <p>Airport transfers, grocery pre-stocking, tours, private chef, boat charters — we curate the Aruba experience your guests remember.</p>
+        </div>
+
+        <div class="service-card reveal">
+          <div class="service-icon">&#9881;</div>
+          <h3>Maintenance &amp; Security</h3>
+          <p>Technical oversight through our partnership with Aruba Sol Energy. Preventive maintenance, solar systems, 24/7 on-island response.</p>
+        </div>
+
+        <div class="service-card reveal">
+          <div class="service-icon">&#128196;</div>
+          <h3>Monthly Reports with Photos</h3>
+          <p>Transparent, detailed reporting every month — revenue, occupancy, expenses, and photos of your property. No surprises, ever.</p>
+        </div>
+
+        <div class="service-card reveal">
+          <div class="service-icon">&#127969;</div>
+          <h3>Buy &amp; Sell Advisory</h3>
+          <p>Thinking of acquiring or selling in Aruba? We advise owners with 20+ years of local tourism and construction experience.</p>
+        </div>
+
+        <div class="service-card reveal">
+          <div class="service-icon">&#128274;</div>
+          <h3>Owner Portal</h3>
+          <p>A private dashboard with your bookings, statements, photo reports and documents — accessible any time, anywhere.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ABOUT ============================== -->
+  <section id="about" class="alt">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-photo reveal"></div>
+        <div class="reveal">
+          <span class="eyebrow">Who we are</span>
+          <h2>A husband-and-wife team who treat every property like our own.</h2>
+          <p><strong style="color:var(--ink);">Sophie</strong> brings 20 years in tourism and hospitality — the instinct for what makes a guest experience truly 5-star.</p>
+          <p><strong style="color:var(--ink);">Stéphane</strong> brings 35 years in construction and technical operations — the eye for what keeps a property impeccable and profitable over time.</p>
+          <p>Together with our partner <strong style="color:var(--ink);">Aruba Sol Energy</strong>, we run a deliberately small agency. You will never be a number — you will have our personal phone numbers.</p>
+
+          <div class="about-stats">
+            <div class="stat"><div class="stat-num">20+</div><div class="stat-lbl">Years Tourism</div></div>
+            <div class="stat"><div class="stat-num">35+</div><div class="stat-lbl">Years Construction</div></div>
+            <div class="stat"><div class="stat-num">5★</div><div class="stat-lbl">Concierge Standard</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== PORTFOLIO ============================== -->
+  <section id="portfolio">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">Selected Properties</span>
+        <h2>A small portfolio, personally managed.</h2>
+        <p>We intentionally limit the number of homes we take on. Every property gets the attention it deserves.</p>
+      </div>
+
+      <div class="portfolio-grid">
+
+        <!-- 1. Sweet Chalet -->
+        <article class="property-card reveal" onclick="openBooking('Sweet Chalet — Pool &amp; National Park','https://www.airbnb.com/rooms/44393363')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/miso/Hosting-44393363/original/74afd6be-c8ad-4a3c-862e-742ee9e21a7c.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Santa Cruz</span>
+            <h3>Sweet Chalet — Pool &amp; National Park</h3>
+            <p>Chalet-style apartment with private entrance, pool access and stunning views. 1 min from Arikok National Park. &#11088; 4.92</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#9728; Pool</span><span>&#127796; Nature</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 2. Modern Studio near Eagle Beach -->
+        <article class="property-card reveal" onclick="openBooking('Modern Studio — Near Eagle Beach','https://www.airbnb.com/rooms/1564498617646131316')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-1564498617646131316/original/26e481f8-3c51-47bf-8b8c-b611231acba1.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Noord</span>
+            <h3>Modern Studio — Near Eagle Beach</h3>
+            <p>Brand new all-white modern apartment, minutes from Eagle Beach. Bright, sleek and fully equipped. &#11088; New</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#127754; Beach</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 3. Koeriboeri Lodge #1 -->
+        <article class="property-card reveal" onclick="openBooking('Nature Lodge #1 — Koeriboeri','https://www.airbnb.com/rooms/41143720')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-U3RheVN1cHBseUxpc3Rpbmc6NDExNDM3MjA%3D/original/2dcb6c00-c5c4-4758-8809-3f7f8600698b.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Paradera</span>
+            <h3>Nature Lodge #1 — Koeriboeri</h3>
+            <p>Tropical lodge in a lush garden oasis with birds, butterflies and pool. Peaceful and private. &#11088; 4.97 · 102 reviews</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#9728; Pool</span><span>&#127796; Nature</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 4. Koeriboeri Lodge #2 -->
+        <article class="property-card reveal" onclick="openBooking('Nature Lodge #2 — Koeriboeri','https://www.airbnb.com/rooms/41146023')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-41146023/original/2a89e365-5b5c-4d7f-bf6e-a80dc11aad5c.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Paradera</span>
+            <h3>Nature Lodge #2 — Koeriboeri</h3>
+            <p>Guest Favorite — serene tropical lodge with outdoor kitchen, pool and breathtaking nature. &#11088; 5.0 · 55 reviews</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#9728; Pool</span><span>&#127796; Nature</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 5. Koeriboeri Lodge #3 -->
+        <article class="property-card reveal" onclick="openBooking('Nature Lodge #3 — Koeriboeri','https://www.airbnb.com/rooms/46260577')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-46260577/original/91020529-b47a-49a7-a4e1-813bd71a5dca.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Paradera</span>
+            <h3>Nature Lodge #3 — Koeriboeri</h3>
+            <p>Tranquil lodge surrounded by tropical greenery. King bed, outdoor kitchen and private pool area. &#11088; 4.94 · 52 reviews</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#9728; Pool</span><span>&#127796; Nature</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 6. Koeriboeri Lodge #4 -->
+        <article class="property-card reveal" onclick="openBooking('Nature Lodge #4 — Koeriboeri','https://www.airbnb.com/rooms/46369222')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-46369222/original/9b35f32d-571a-4d84-8415-11d274e637ea.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Sero Cristal</span>
+            <h3>Nature Lodge #4 — Koeriboeri</h3>
+            <p>Guest Favorite in the Top 10% on Airbnb. Peaceful retreat with pool, garden views and total privacy. &#11088; 4.95 · 43 reviews</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#9728; Pool</span><span>&#127796; Nature</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 7. Koeriboeri Lodge #5 -->
+        <article class="property-card reveal" onclick="openBooking('Nature Lodge #5 — Koeriboeri','https://www.airbnb.com/rooms/46370030')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-46370030/original/910a3bd0-3faf-4572-9e34-1d26311c2bb8.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Sero Cristal</span>
+            <h3>Nature Lodge #5 — Koeriboeri</h3>
+            <p>Guest Favorite — top-rated lodge with outdoor living, tropical garden and shared pool. &#11088; 4.98 · 87 reviews</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#9728; Pool</span><span>&#127796; Nature</span>
+            </div>
+          </div>
+        </article>
+
+        <!-- 8. Tropical Oasis House -->
+        <article class="property-card reveal" onclick="openBooking('Tropical Oasis House','https://www.airbnb.com/rooms/1614532210588967996')" role="button" tabindex="0">
+          <div class="property-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-1614532210588967996/original/ff76f34c-e455-4fb6-8ff3-f3d45f4f111d.jpeg?im_w=720');"></div>
+          <div class="property-body">
+            <span class="property-tag">Paradera</span>
+            <h3>Tropical Oasis House</h3>
+            <p>Exclusive private house with own pool, gazebo lounge and BBQ. Lush tropical garden, total seclusion. &#11088; New</p>
+            <div class="property-meta">
+              <span>&#128716; 1 bed</span><span>&#128703; 1 bath</span><span>&#9728; Private Pool</span>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== PAYMENT BANNER ============================== -->
+  <section class="alt">
+    <div class="container">
+      <div class="payment-banner reveal">
+        <span class="eyebrow" style="color:var(--gold);">Secure payments</span>
+        <h2>Book, pay and confirm in one place.</h2>
+        <p>Pay your booking deposit, owner invoice or concierge service directly on our secure payment platform. Instant receipts, full transparency.</p>
+        <a href="payment.html" class="btn btn-gold">Go to payment page</a>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ============================== REVIEWS ============================== -->
+  <section id="reviews">
+    <div class="container">
+      <div class="section-head reveal">
+        <span class="eyebrow">What people say</span>
+        <h2>Trusted by owners and guests across Aruba.</h2>
+        <p>Real experiences shared on Google by property owners and travelers who experienced the Host By Sophie difference.</p>
+        <div class="google-rating-bar">
+          <svg class="google-logo" viewBox="0 0 74 24" xmlns="http://www.w3.org/2000/svg" aria-label="Google"><path d="M9.24 8.19v2.46h5.88c-.18 1.38-.64 2.39-1.34 3.1-.86.86-2.2 1.8-4.54 1.8-3.62 0-6.45-2.92-6.45-6.54s2.83-6.54 6.45-6.54c1.95 0 3.38.77 4.43 1.76L15.4 2.5C13.94 1.08 11.98 0 9.24 0 4.28 0 .11 4.04.11 9s4.17 9 9.13 9c2.68 0 4.7-.88 6.28-2.52 1.62-1.62 2.13-3.91 2.13-5.75 0-.57-.04-1.1-.13-1.54H9.24z" fill="#4285F4"/><path d="M25 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52s1.52-3.52 3.28-3.52 3.28 1.46 3.28 3.52-1.52 3.52-3.28 3.52z" fill="#EA4335"/><path d="M53.58 7.49h-.09c-.57-.68-1.67-1.3-3.06-1.3C47.53 6.19 45 8.72 45 12c0 3.25 2.53 5.81 5.43 5.81 1.39 0 2.49-.61 3.06-1.32h.09v.81c0 2.22-1.19 3.41-3.1 3.41-1.56 0-2.53-1.12-2.93-2.07l-2.22.92c.64 1.54 2.33 3.43 5.15 3.43 2.99 0 5.52-1.76 5.52-6.05V6.49h-2.42v1zm-2.93 7.03c-1.76 0-3.1-1.5-3.1-3.52s1.34-3.52 3.1-3.52c1.74 0 3.1 1.53 3.1 3.54.01 2.01-1.36 3.5-3.1 3.5z" fill="#4285F4"/><path d="M38 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52S36.24 8.48 38 8.48s3.28 1.46 3.28 3.52-1.52 3.52-3.28 3.52z" fill="#FBBC05"/><path d="M58 .24h2.51v17.57H58z" fill="#34A853"/><path d="M63.41 11.76c-.06-2.22 1.72-5.57 5.28-5.57 3.14 0 4.93 2.1 4.93 5.81l-7.45 3.08c.57 1.12 1.46 1.7 2.7 1.7 1.24 0 2.1-.61 2.73-1.54l1.94 1.29c-.63.93-2.14 2.28-4.67 2.28-3.37 0-5.46-2.58-5.46-5.05zm2.55-1.07l4.98-2.07c-.27-.69-1.09-1.17-2.05-1.17-1.23 0-2.94 1.09-2.93 3.24z" fill="#EA4335"/></svg>
+          <div class="rating-score">5.0</div>
+          <div class="rating-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <div class="rating-count">&#183; Google Reviews</div>
+        </div>
+      </div>
+
+      <div class="reviews-grid">
+
+        <div class="review-card reveal">
+          <div class="reviewer-row">
+            <div class="reviewer-avatar" style="background:#6B4FA0;">TL</div>
+            <div class="reviewer-info">
+              <div class="reviewer-name">Tina Larkin</div>
+              <div class="reviewer-date">April 2025</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"Sophie is a great host as well as a property manager. She goes above and beyond to make each of her guests feel special. Would highly recommend booking with her on any of her properties! If I owned a home in Aruba I would definitely have her manage it — I know everything would be taken care of to my standards (which are high). Don&#39;t miss out on this experience!"</p>
+        </div>
+
+        <div class="review-card reveal">
+          <div class="reviewer-row">
+            <div class="reviewer-avatar" style="background:#6B6878;">CE</div>
+            <div class="reviewer-info">
+              <div class="reviewer-name">Carole Echave</div>
+              <div class="reviewer-date">April 2025</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"We had an exceptional stay in Aruba thanks to Sophie! From the moment we booked, everything was simple, seamless, and perfectly organized. The accommodation was impeccable, exactly as pictured, clean, well-equipped. Sophie also gave us excellent advice for exploring the island. I wholeheartedly recommend her — you can book with complete confidence!"</p>
+        </div>
+
+        <div class="review-card reveal">
+          <div class="reviewer-row">
+            <div class="reviewer-avatar" style="background:#E8711A;">EV</div>
+            <div class="reviewer-info">
+              <div class="reviewer-name">Emanuel Vallejos</div>
+              <div class="reviewer-date">April 2025</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"Sophie and Stephane were incredibly friendly and helpful during our Aruba vacation. They helped us organize tours and gave us restaurant recommendations. I highly recommend them!"</p>
+        </div>
+
+        <div class="review-card reveal">
+          <div class="reviewer-row">
+            <div class="reviewer-avatar" style="background:#E8711A;">GG</div>
+            <div class="reviewer-info">
+              <div class="reviewer-name">Gamer Girl</div>
+              <div class="reviewer-date">April 2025</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"The place was awesome. Sophie was very friendly. Merci beaucoup &#128522;"</p>
+        </div>
+
+        <div class="review-card reveal">
+          <div class="reviewer-row">
+            <div class="reviewer-avatar" style="background:#E91E8C;">JB</div>
+            <div class="reviewer-info">
+              <div class="reviewer-name">Joanne B&#252;chi</div>
+              <div class="reviewer-date">April 2025</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"It was a pleasure to have Sophie as a host. She gave us very nice tips for things to do around the island and whatever request we had, she was there to help us. The communication was also very smooth. Thank you!"</p>
+        </div>
+
+        <div class="review-card reveal">
+          <div class="reviewer-row">
+            <div class="reviewer-avatar" style="background:#8D6748;">LK</div>
+            <div class="reviewer-info">
+              <div class="reviewer-name">Len Kozachuk &#127775;</div>
+              <div class="reviewer-date">April 2025 &middot; Local Guide</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"Sophie was our host during our recent stay in Aruba. Her welcoming manner, friendliness and concern for our comfort were greatly appreciated. She provided strong recommendations for activities and restaurants, and followed up to see if we had any concerns. We feel like we have a friend in Aruba. Merci encore, Sophie! &#192; la prochaine!"</p>
+        </div>
+
+        <div class="review-card reveal">
+          <div class="reviewer-row">
+            <div class="reviewer-avatar" style="background:#1A4A6B;">FR</div>
+            <div class="reviewer-info">
+              <div class="reviewer-name">Federico Rojas</div>
+              <div class="reviewer-date">February 2025</div>
+            </div>
+          </div>
+          <div class="review-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <p class="review-text">"Sophie is very diligent. From the time we confirmed our trip, she kept us informed about activities around the island. When we got there, she was so kind and made every effort to show us the place and help with transportation. The accommodation was comfortable, neat and perfectly equipped. We will do everything to book again with her. Thanx Sophie — see you soon!"</p>
+        </div>
+
+      </div>
+
+      <div class="reviews-cta">
+        <a href="https://www.google.com/maps/place/HOST+BY+SOPHIE/@12.5172366,-69.9620747,17z/data=!3m1!1e3!4m6!3m5!1s0x676f4426bf5555ff:0x4c61a5cbb18e386!8m2!3d12.5172366!4d-69.9620747!16s%2Fg%2F11myzm7gbp" target="_blank" rel="noopener" class="btn btn-primary">View all reviews on Google</a>
+        <div class="google-badge">
+          <svg width="16" height="16" viewBox="0 0 74 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.24 8.19v2.46h5.88c-.18 1.38-.64 2.39-1.34 3.1-.86.86-2.2 1.8-4.54 1.8-3.62 0-6.45-2.92-6.45-6.54s2.83-6.54 6.45-6.54c1.95 0 3.38.77 4.43 1.76L15.4 2.5C13.94 1.08 11.98 0 9.24 0 4.28 0 .11 4.04.11 9s4.17 9 9.13 9c2.68 0 4.7-.88 6.28-2.52 1.62-1.62 2.13-3.91 2.13-5.75 0-.57-.04-1.1-.13-1.54H9.24z" fill="#4285F4"/><path d="M25 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52s1.52-3.52 3.28-3.52 3.28 1.46 3.28 3.52-1.52 3.52-3.28 3.52z" fill="#EA4335"/></svg>
+          Verified on Google
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CONTACT ============================== -->
+  <section id="contact">
+    <div class="container">
+      <div class="contact-grid">
+
+        <div class="reveal">
+          <span class="eyebrow">Get in touch</span>
+          <h2>Let's talk about your property.</h2>
+          <p>Tell us about your goals and we'll get back to you within 24 hours — personally.</p>
+
+          <div class="contact-info">
+            <ul>
+              <li>
+                <div class="ico">&#9993;</div>
+                <div><strong>Email</strong><a href="mailto:hostbysophie@gmail.com">hostbysophie@gmail.com</a></div>
+              </li>
+              <li>
+                <div class="ico">&#9742;</div>
+                <div><strong>Phone / WhatsApp</strong><a href="tel:+2975931874">+297 593 18 74</a></div>
+              </li>
+              <li>
+                <div class="ico">&#9873;</div>
+                <div><strong>Location</strong>Santa Cruz, Aruba</div>
+              </li>
+              <li>
+                <div class="ico">&#128247;</div>
+                <div><strong>Instagram</strong><a href="https://instagram.com/hostbysophie" target="_blank" rel="noopener">@hostbysophie</a></div>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <form class="reveal" onsubmit="event.preventDefault(); alert('Thank you — we will get back to you within 24 hours.'); this.reset();">
+          <div>
+            <label for="name">Your name</label>
+            <input id="name" type="text" required placeholder="Sophie Example" />
+          </div>
+          <div>
+            <label for="email">Email</label>
+            <input id="email" type="email" required placeholder="you@example.com" />
+          </div>
+          <div>
+            <label for="topic">I'm interested in</label>
+            <select id="topic">
+              <option>Rental management for my property</option>
+              <option>Booking a stay</option>
+              <option>Concierge services</option>
+              <option>Buying / selling in Aruba</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="msg">Message</label>
+            <textarea id="msg" placeholder="Tell us a little about your property or your trip…"></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Send message</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FOOTER ============================== -->
+  <footer>
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            <img src="assets/Logo.png" alt="Host By Sophie" class="footer-logo" />
+          </div>
+          <p style="color:rgba(255,255,255,.65); font-size:.9rem;">Boutique vacation rental &amp; property management in Aruba. A small, personal agency — quality over quantity.</p>
+        </div>
+        <div>
+          <h4>Explore</h4>
+          <ul>
+            <li><a href="#services">Services</a></li>
+            <li><a href="#about">About Us</a></li>
+            <li><a href="#portfolio">Properties</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Owners</h4>
+          <ul>
+            <li><a href="portal.html">Owner Portal</a></li>
+            <li><a href="payment.html">Payments</a></li>
+            <li><a href="#contact">Request Report</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li><a href="mailto:hostbysophie@gmail.com">hostbysophie@gmail.com</a></li>
+            <li><a href="tel:+2975931874">+297 593 18 74</a></li>
+            <li><a href="https://instagram.com/hostbysophie" target="_blank" rel="noopener">@hostbysophie</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bot">
+        <div>&copy; 2026 Host By Sophie · Santa Cruz, Aruba · In partnership with Aruba Sol Energy</div>
+        <div><a href="#home">Back to top &uarr;</a></div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ============================== BOOKING MODAL ============================== -->
+  <div id="bookingModal" class="modal-overlay" onclick="closeBooking(event)">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeBooking()">&times;</button>
+
+      <div class="modal-badge">&#127968; Book Direct &amp; Save</div>
+      <h3 id="modalTitle">Property Name</h3>
+      <p class="modal-sub">Skip the platform fees — contact us directly and get the same 5-star experience for less.</p>
+
+      <div class="modal-actions">
+        <a id="modalWhatsApp" href="#" target="_blank" class="btn btn-whatsapp">
+          &#128241; WhatsApp Sophie
+        </a>
+        <a id="modalEmail" href="#" class="btn btn-primary">
+          &#9993;&#65039; Email us
+        </a>
+      </div>
+
+      <div class="modal-divider"><span>or check availability on</span></div>
+
+      <a id="modalAirbnb" href="#" target="_blank" rel="noopener" class="btn btn-ghost modal-airbnb-btn">
+        View on Airbnb
+      </a>
+    </div>
+  </div>
+
+  <!-- ============================== JS ============================== -->
+  <script>
+    // Simple reveal-on-scroll
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+    }, { threshold: 0.12 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+    // Close mobile menu on link click
+    document.querySelectorAll('#navLinks a').forEach(a => {
+      a.addEventListener('click', () => document.getElementById('navLinks').classList.remove('open'));
+    });
+
+    // Keyboard support for property cards
+    document.querySelectorAll('.property-card[role="button"]').forEach(card => {
+      card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') card.click(); });
+    });
+
+    // Booking modal
+    function openBooking(name, airbnbUrl) {
+      const msg = encodeURIComponent('Hello Sophie! I\'m interested in booking: ' + name + '. Could you let me know your availability and direct rates? Thank you!');
+      document.getElementById('modalTitle').textContent = name;
+      document.getElementById('modalWhatsApp').href = 'https://wa.me/2975931874?text=' + msg;
+      document.getElementById('modalEmail').href = 'mailto:hostbysophie@gmail.com?subject=Direct booking enquiry — ' + name + '&body=Hello Sophie,%0A%0AI am interested in booking: ' + name + '.%0APlease let me know your availability and direct rates.%0A%0AThank you!';
+      document.getElementById('modalAirbnb').href = airbnbUrl;
+      document.getElementById('bookingModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeBooking(e) {
+      if (e && e.target !== document.getElementById('bookingModal') && !e.target.classList.contains('modal-close')) return;
+      document.getElementById('bookingModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') { document.getElementById('bookingModal').classList.remove('open'); document.body.style.overflow = ''; } });
+  </script>
+</body>
+</html>
