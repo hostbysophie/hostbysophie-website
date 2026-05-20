@@ -1,14 +1,9 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
+  // Cloudflare Workers configuration — Host By Sophie
   "name": "hostbysophie-website",
-  "compatibility_date": "2026-05-03",
-  "observability": {
-    "enabled": true
-  },
+  "compatibility_date": "2025-01-01",
+  "main": "_worker.js",
   "assets": {
     "directory": "."
-  },
-  "compatibility_flags": [
-    "nodejs_compat"
-  ]
+  }
 }
