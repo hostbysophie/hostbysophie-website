@@ -186,10 +186,10 @@
           </div>
 
           <div>
-            <label for="payRef">Reference
-              <span style="font-weight:400; color:var(--ink-soft);">(booking ID or invoice no.)</span>
+            <label for="payRef">Designation <span style="color:var(--coral);">*</span>
+              <span style="font-weight:400; color:var(--ink-soft);">(booking ID, property name or description)</span>
             </label>
-            <input id="payRef" type="text" placeholder="e.g. HBS-2026-0412" />
+            <input id="payRef" type="text" required placeholder="e.g. Villa Sunset – HBS-2026-0412" />
           </div>
 
           <div>
@@ -308,6 +308,7 @@
       if (!name)                    return showError('Please enter your full name.');
       if (!email || !email.includes('@')) return showError('Please enter a valid email address.');
       if (!amount || amount < 1)    return showError('Please enter a valid amount (minimum $1.00).');
+      if (!ref)                     return showError('Please enter a designation (booking ID or description).');
 
       // Show loading
       document.getElementById('loadingOverlay').classList.add('show');
