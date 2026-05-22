@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Host By Sophie — Promotional Video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,600&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+/* ─── RESET ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#1A3A5C;
+  --gold:#B8953D;
+  --ink:#1C2B36;
+  --white:#FFFFFF;
+  --muted:#6B7B85;
+  --cream:#FAF5ED;
+  --steel:#E7ECF1;
+}
+body{background:#0a0a0a;overflow:hidden;font-family:'Inter',sans-serif;}
+
+/* ─── STAGE 16:9 ─────────────────────────────────── */
+#stage{
+  position:relative;
+  width:100vw;height:100vh;
+  overflow:hidden;
+}
+
+/* ─── SCENES ─────────────────────────────────────── */
+.scene{
+  position:absolute;inset:0;
+  opacity:0;
+  transition:opacity 1.4s ease;
+  display:flex;align-items:center;justify-content:center;
+  flex-direction:column;
+  overflow:hidden;
+}
+.scene.active{opacity:1;}
+
+/* Full-bleed background image */
+.scene-bg{
+  position:absolute;inset:0;
+  background-size:cover;
+  background-position:center;
+  transform:scale(1.06);
+  transition:transform 8s ease;
+  filter:brightness(0.55);
+}
+.scene.active .scene-bg{transform:scale(1);}
+
+/* Gradient overlay */
+.scene-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(160deg, rgba(26,58,92,0.72) 0%, rgba(26,58,92,0.3) 60%, rgba(0,0,0,0.5) 100%);
+}
+
+/* ─── LOGO ───────────────────────────────────────── */
+.hbs-logo{
+  position:absolute;top:28px;left:36px;
+  display:flex;align-items:center;gap:10px;
+  z-index:50;
+  opacity:0;transform:translateY(-8px);
+  transition:all 0.9s ease 0.3s;
+}
+.scene.active .hbs-logo{opacity:1;transform:translateY(0);}
+.hbs-logo img{height:44px;width:auto;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));}
+.hbs-logo-text{
+  font-family:'Inter',sans-serif;
+  font-size:14px;font-weight:700;
+  color:#fff;letter-spacing:0.04em;
+  text-shadow:0 1px 6px rgba(0,0,0,0.6);
+}
+.hbs-logo-text span{color:var(--gold);}
+
+/* ─── CONTENT ────────────────────────────────────── */
+.scene-content{
+  position:relative;z-index:10;
+  text-align:center;
+  padding:0 6vw;
+  max-width:960px;
+  width:100%;
+}
+.scene-content.left{text-align:left;margin-left:8vw;margin-right:auto;}
+
+.eyebrow{
+  display:inline-block;
+  font-family:'Inter',sans-serif;
+  font-size:clamp(9px,1.1vw,12px);
+  font-weight:600;letter-spacing:0.22em;
+  text-transform:uppercase;
+  color:var(--gold);
+  border:1px solid rgba(184,149,61,0.45);
+  padding:5px 16px;border-radius:30px;
+  margin-bottom:18px;
+  opacity:0;transform:translateY(10px);
+  transition:all 0.7s ease 0.5s;
+}
+.scene.active .eyebrow{opacity:1;transform:translateY(0);}
+
+h1.scene-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(36px,7vw,82px);
+  font-weight:600;line-height:1.08;
+  color:#fff;
+  text-shadow:0 2px 24px rgba(0,0,0,0.5);
+  margin-bottom:18px;
+  opacity:0;transform:translateY(22px);
+  transition:all 1s ease 0.75s;
+}
+.scene.active h1.scene-title{opacity:1;transform:translateY(0);}
+h1.scene-title em{color:var(--gold);font-style:italic;}
+
+.scene-sub{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(13px,1.8vw,19px);
+  font-weight:300;
+  color:rgba(255,255,255,0.82);
+  line-height:1.65;
+  max-width:640px;
+  margin:0 auto 28px;
+  opacity:0;transform:translateY(16px);
+  transition:all 0.9s ease 1s;
+}
+.scene.active .scene-sub{opacity:1;transform:translateY(0);}
+.scene-content.left .scene-sub{margin:0 0 28px;}
+
+.scene-cta{
+  opacity:0;transform:translateY(12px);
+  transition:all 0.8s ease 1.3s;
+}
+.scene.active .scene-cta{opacity:1;transform:translateY(0);}
+
+/* Gold divider line */
+.gold-line{
+  width:60px;height:2px;
+  background:var(--gold);
+  margin:0 auto 20px;
+  opacity:0;transform:scaleX(0);
+  transition:all 0.8s ease 0.6s;
+}
+.scene.active .gold-line{opacity:1;transform:scaleX(1);}
+.scene-content.left .gold-line{margin:0 0 20px;}
+
+/* ─── SECTION LABEL (top-right) ─────────────────── */
+#section-label{
+  position:fixed;top:28px;right:36px;
+  font-family:'Inter',sans-serif;
+  font-size:10px;letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,0.45);
+  z-index:100;
+  transition:opacity 0.5s;
+}
+
+/* ─── PROGRESS ───────────────────────────────────── */
+#progress-bar{
+  position:fixed;bottom:0;left:0;
+  height:3px;
+  background:linear-gradient(90deg, var(--navy), var(--gold));
+  transition:width 0.25s linear;
+  z-index:200;
+}
+#timer{
+  position:fixed;bottom:18px;right:20px;
+  font-family:'Inter',sans-serif;
+  font-size:12px;letter-spacing:0.15em;
+  color:rgba(255,255,255,0.35);z-index:200;
+}
+
+/* ─── NAV DOTS ───────────────────────────────────── */
+#nav-dots{
+  position:fixed;bottom:22px;left:50%;
+  transform:translateX(-50%);
+  display:flex;gap:7px;z-index:200;
+}
+.dot{
+  width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,0.28);cursor:pointer;
+  transition:all 0.3s;
+}
+.dot.active{background:var(--gold);transform:scale(1.5);}
+
+/* ─── PLAY BTN ───────────────────────────────────── */
+#play-btn{
+  position:fixed;bottom:14px;left:20px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.7);
+  padding:6px 16px;border-radius:20px;
+  font-family:'Inter',sans-serif;font-size:11px;
+  letter-spacing:0.15em;cursor:pointer;z-index:200;
+  transition:all 0.3s;
+}
+#play-btn:hover{background:rgba(184,149,61,0.25);border-color:var(--gold);color:#fff;}
+
+/* ─── FULLSCREEN BTN ─────────────────────────────── */
+#fs-btn{
+  position:fixed;bottom:14px;left:120px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.7);
+  padding:6px 16px;border-radius:20px;
+  font-family:'Inter',sans-serif;font-size:11px;
+  letter-spacing:0.15em;cursor:pointer;z-index:200;
+  transition:all 0.3s;
+}
+#fs-btn:hover{background:rgba(184,149,61,0.25);border-color:var(--gold);color:#fff;}
+
+/* ─── STAT CARDS (Who We Are) ────────────────────── */
+.stat-row{
+  display:flex;gap:20px;
+  opacity:0;transform:translateY(20px);
+  transition:all 0.9s ease 1.2s;
+}
+.scene.active .stat-row{opacity:1;transform:translateY(0);}
+.stat-box{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(184,149,61,0.35);
+  border-radius:10px;
+  padding:16px 24px;text-align:center;
+  backdrop-filter:blur(6px);
+}
+.stat-num{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(28px,4vw,46px);
+  font-weight:600;color:var(--gold);
+  line-height:1;
+}
+.stat-lbl{
+  font-family:'Inter',sans-serif;
+  font-size:10px;font-weight:500;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:rgba(255,255,255,0.6);
+  margin-top:4px;
+}
+
+/* ─── PROPERTY CARDS ─────────────────────────────── */
+.prop-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+  width:min(1100px,92vw);
+  margin:0 auto;
+}
+.prop-card{
+  border-radius:10px;overflow:hidden;
+  background:#111;
+  position:relative;
+  aspect-ratio:3/4;
+  cursor:default;
+  opacity:0;transform:translateY(24px);
+  transition:opacity 0.7s ease, transform 0.7s ease;
+}
+.prop-card.show{opacity:1;transform:translateY(0);}
+.prop-img{
+  position:absolute;inset:0;
+  background-size:cover;background-position:center;
+  transition:transform 6s ease;
+  filter:brightness(0.75);
+}
+.prop-card:hover .prop-img{transform:scale(1.06);}
+.prop-gradient{
+  position:absolute;inset:0;
+  background:linear-gradient(to top, rgba(26,58,92,0.92) 0%, transparent 50%);
+}
+.prop-info{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:12px;
+}
+.prop-tag{
+  display:inline-block;
+  font-family:'Inter',sans-serif;
+  font-size:9px;font-weight:600;
+  letter-spacing:0.15em;text-transform:uppercase;
+  color:var(--gold);
+  background:rgba(26,58,92,0.7);
+  padding:3px 8px;border-radius:10px;
+  margin-bottom:4px;
+}
+.prop-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(12px,1.4vw,16px);
+  font-weight:600;color:#fff;
+  line-height:1.2;
+}
+.prop-stars{
+  font-size:10px;color:var(--gold);
+  margin-top:3px;font-family:'Inter',sans-serif;
+}
+
+/* ─── ACTIVITY CARDS ─────────────────────────────── */
+.act-section{
+  width:min(1100px,92vw);
+  margin:0 auto;
+}
+.act-category-header{
+  text-align:center;
+  margin-bottom:16px;
+  opacity:0;transform:translateY(14px);
+  transition:all 0.7s ease 0.3s;
+}
+.scene.active .act-category-header{opacity:1;transform:translateY(0);}
+.act-cat-label{
+  font-family:'Inter',sans-serif;
+  font-size:9px;font-weight:600;letter-spacing:0.22em;
+  text-transform:uppercase;color:var(--gold);
+  display:block;margin-bottom:4px;
+}
+.act-cat-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(22px,3.5vw,38px);
+  font-weight:600;color:#fff;
+  font-style:italic;
+}
+.act-grid{
+  display:grid;
+  gap:12px;
+}
+.act-grid.cols-2{grid-template-columns:repeat(2,1fr);}
+.act-grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.act-grid.cols-4{grid-template-columns:repeat(4,1fr);}
+
+.act-card{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.1);
+  border-top:2px solid var(--gold);
+  border-radius:10px;overflow:hidden;
+  opacity:0;transform:translateY(20px);
+  transition:opacity 0.6s ease, transform 0.6s ease;
+  display:flex;flex-direction:column;
+}
+.act-card.show{opacity:1;transform:translateY(0);}
+.act-img{
+  height:180px;
+  background-size:cover;background-position:center;
+  filter:brightness(0.8);
+  flex-shrink:0;
+}
+.act-body{padding:10px 12px 12px;}
+.act-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(13px,1.6vw,17px);
+  font-weight:600;color:#fff;
+  margin-bottom:4px;line-height:1.2;
+}
+.act-desc{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(9px,1vw,11px);
+  color:rgba(255,255,255,0.6);
+  line-height:1.5;
+}
+
+/* ─── WHY US POINTS ──────────────────────────────── */
+.why-grid{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:14px;
+  width:min(1050px,92vw);
+  margin:0 auto;
+}
+.why-card{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(184,149,61,0.25);
+  border-top:2px solid var(--gold);
+  border-radius:10px;
+  padding:18px 14px;text-align:center;
+  opacity:0;transform:translateY(20px);
+  transition:opacity 0.7s ease, transform 0.7s ease;
+}
+.why-card.show{opacity:1;transform:translateY(0);}
+.why-icon{font-size:28px;margin-bottom:10px;}
+.why-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(14px,1.6vw,18px);
+  font-weight:600;color:var(--gold);
+  margin-bottom:6px;
+}
+.why-text{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(9px,1vw,11px);
+  color:rgba(255,255,255,0.65);
+  line-height:1.5;
+}
+
+/* ─── CONTACT SCREEN ─────────────────────────────── */
+.contact-wrap{
+  display:flex;flex-direction:column;
+  align-items:center;gap:14px;
+  width:min(620px,88vw);
+}
+.contact-row{
+  display:flex;align-items:center;gap:14px;
+  background:rgba(255,255,255,0.07);
+  border:1px solid rgba(184,149,61,0.3);
+  border-radius:12px;
+  padding:14px 24px;
+  width:100%;
+  opacity:0;transform:translateY(14px);
+  transition:opacity 0.7s ease, transform 0.7s ease;
+}
+.contact-row.show{opacity:1;transform:translateY(0);}
+.contact-row .cr-icon{font-size:22px;flex-shrink:0;}
+.contact-row .cr-text{font-family:'Inter',sans-serif;}
+.contact-row .cr-label{
+  font-size:9px;font-weight:600;
+  letter-spacing:0.2em;text-transform:uppercase;
+  color:var(--gold);display:block;margin-bottom:2px;
+}
+.contact-row .cr-val{
+  font-size:clamp(13px,1.8vw,17px);font-weight:500;color:#fff;
+}
+.contact-note{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(10px,1.2vw,13px);
+  color:rgba(255,255,255,0.5);
+  margin-top:4px;letter-spacing:0.05em;
+}
+.notice-box{
+  background:rgba(184,149,61,0.12);
+  border:1px solid rgba(184,149,61,0.4);
+  border-radius:10px;
+  padding:12px 22px;
+  font-family:'Inter',sans-serif;
+  font-size:clamp(11px,1.3vw,14px);
+  color:rgba(255,255,255,0.8);
+  text-align:center;
+  opacity:0;transform:translateY(14px);
+  transition:opacity 0.7s ease 1.6s, transform 0.7s ease 1.6s;
+}
+.scene.active .notice-box{opacity:1;transform:translateY(0);}
+
+/* ─── END CARD ───────────────────────────────────── */
+.end-logo{
+  display:flex;flex-direction:column;
+  align-items:center;gap:14px;
+  opacity:0;transform:scale(0.9);
+  transition:all 1.2s ease 0.4s;
+}
+.scene.active .end-logo{opacity:1;transform:scale(1);}
+.end-logo img{
+  height:90px;width:auto;
+  filter:drop-shadow(0 4px 20px rgba(184,149,61,0.5));
+  animation:glow 3s ease-in-out infinite;
+}
+@keyframes glow{
+  0%,100%{filter:drop-shadow(0 4px 20px rgba(184,149,61,0.4));}
+  50%{filter:drop-shadow(0 4px 36px rgba(184,149,61,0.8));}
+}
+.end-brand{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(24px,5vw,54px);
+  font-weight:600;color:#fff;
+  letter-spacing:0.06em;
+}
+.end-tagline{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(11px,1.4vw,15px);
+  color:var(--gold);letter-spacing:0.2em;
+  text-transform:uppercase;font-weight:400;
+}
+.end-contact{
+  font-family:'Inter',sans-serif;
+  font-size:clamp(10px,1.2vw,13px);
+  color:rgba(255,255,255,0.45);
+  letter-spacing:0.06em;margin-top:6px;
+}
+
+/* ─── REVIEW QUOTE ───────────────────────────────── */
+.quote-block{
+  background:rgba(255,255,255,0.07);
+  border-left:3px solid var(--gold);
+  border-radius:0 10px 10px 0;
+  padding:16px 22px;
+  max-width:560px;
+  margin:20px auto 0;
+  opacity:0;transform:translateY(14px);
+  transition:all 0.9s ease 1.4s;
+  text-align:left;
+}
+.scene.active .quote-block{opacity:1;transform:translateY(0);}
+.quote-text{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(14px,1.8vw,19px);
+  font-style:italic;color:rgba(255,255,255,0.85);
+  line-height:1.6;
+}
+.quote-author{
+  font-family:'Inter',sans-serif;
+  font-size:11px;color:var(--gold);
+  letter-spacing:0.15em;margin-top:8px;
+  text-transform:uppercase;
+}
+
+/* ─── TRANSITION OVERLAY ─────────────────────────── */
+#trans-overlay{
+  position:fixed;inset:0;
+  background:var(--navy);
+  opacity:0;pointer-events:none;
+  z-index:500;
+  transition:opacity 0.5s;
+}
+#trans-overlay.flash{opacity:0.4;}
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+<!-- ══════════════════════════════════════════
+     SCENE 1 · AERIAL ARUBA
+═══════════════════════════════════════════ -->
+<div class="scene active" id="s1" data-label="OPENING · ARUBA">
+  <div class="scene-bg" style="background-image:url('https://images.unsplash.com/photo-1598153346810-860daa814c4b?w=1920&q=80');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(26,58,92,0.7),rgba(0,0,0,0.55));"></div>
+  <div class="hbs-logo">
+    <img src="assets/Logo.png" alt="Host By Sophie"/>
+  </div>
+  <div class="scene-content">
+    <div class="eyebrow">🇦🇼 &nbsp;Santa Cruz · Aruba</div>
+    <div class="gold-line"></div>
+    <h1 class="scene-title">One Happy <em>Island.</em></h1>
+    <p class="scene-sub">Where turquoise waters meet white sand shores — and every stay becomes a memory.</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 2 · LOGO REVEAL
+═══════════════════════════════════════════ -->
+<div class="scene" id="s2" data-label="LOGO REVEAL">
+  <div class="scene-bg" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(to bottom, rgba(26,58,92,0.85), rgba(26,58,92,0.55));"></div>
+  <div class="hbs-logo">
+    <img src="assets/Logo.png" alt="Host By Sophie"/>
+  </div>
+  <div class="scene-content">
+    <div class="end-logo">
+      <img src="assets/Logo.png" alt="Host By Sophie" style="height:110px;"/>
+      <div class="end-brand">Host By Sophie</div>
+      <div class="end-tagline">Your Home in Paradise · Our Passion</div>
+      <div class="end-contact">hostbysophie.com &nbsp;·&nbsp; Santa Cruz, Aruba</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 3 · WHO WE ARE
+═══════════════════════════════════════════ -->
+<div class="scene" id="s3" data-label="WHO WE ARE">
+  <div class="scene-bg" style="background-image:url('picts/pool2.png');"></div>
+  <div class="scene-overlay"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div class="scene-content left">
+    <div class="eyebrow">Boutique · Trusted · Personal</div>
+    <div class="gold-line"></div>
+    <h1 class="scene-title" style="font-size:clamp(28px,5.5vw,62px);">A husband-and-wife team<br>who treat every property<br>like <em>our own.</em></h1>
+    <p class="scene-sub">Sophie (20 yrs tourism) &amp; Stéphane (35 yrs construction) — in partnership with Aruba Sol Energy. Small by choice. Exceptional by design.</p>
+    <div class="stat-row">
+      <div class="stat-box"><div class="stat-num">20+</div><div class="stat-lbl">Years Tourism</div></div>
+      <div class="stat-box"><div class="stat-num">35+</div><div class="stat-lbl">Years Construction</div></div>
+      <div class="stat-box"><div class="stat-num">5★</div><div class="stat-lbl">Concierge</div></div>
+      <div class="stat-box"><div class="stat-num">5.0</div><div class="stat-lbl">Google Rating</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 4 · SERVICES
+═══════════════════════════════════════════ -->
+<div class="scene" id="s4" data-label="OUR SERVICES">
+  <div class="scene-bg" style="background-image:url('picts/pool1.png');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(26,58,92,0.82),rgba(26,58,92,0.5));"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div class="scene-content">
+    <div class="eyebrow">Full-Service Property Care</div>
+    <div class="gold-line"></div>
+    <h1 class="scene-title" style="font-size:clamp(26px,5vw,56px);">Everything your property needs.<br><em>One trusted contact.</em></h1>
+    <div class="stat-row" style="justify-content:center;flex-wrap:wrap;">
+      <div class="stat-box"><div style="font-size:22px;margin-bottom:4px;">⭐</div><div class="stat-lbl">Full Rental Management</div></div>
+      <div class="stat-box"><div style="font-size:22px;margin-bottom:4px;">🏠</div><div class="stat-lbl">5-Star Concierge</div></div>
+      <div class="stat-box"><div style="font-size:22px;margin-bottom:4px;">🔧</div><div class="stat-lbl">Maintenance &amp; Security</div></div>
+      <div class="stat-box"><div style="font-size:22px;margin-bottom:4px;">📋</div><div class="stat-lbl">Monthly Photo Reports</div></div>
+      <div class="stat-box"><div style="font-size:22px;margin-bottom:4px;">🏡</div><div class="stat-lbl">Buy &amp; Sell Advisory</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 5 · PROPERTIES
+═══════════════════════════════════════════ -->
+<div class="scene" id="s5" data-label="OUR PROPERTIES">
+  <div class="scene-bg" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-U3RheVN1cHBseUxpc3Rpbmc6NDExNDM3MjA%3D/original/2dcb6c00-c5c4-4758-8809-3f7f8600698b.jpeg?im_w=720');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(to bottom, rgba(10,10,20,0.75) 0%, rgba(26,58,92,0.6) 100%);"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div style="position:relative;z-index:10;width:100%;padding-top:80px;">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div class="eyebrow" style="opacity:1;transform:none;">Selected Properties · A small portfolio, personally managed</div>
+    </div>
+    <div class="prop-grid">
+      <div class="prop-card" data-delay="0">
+        <div class="prop-img" style="background-image:url('https://a0.muscache.com/im/pictures/miso/Hosting-44393363/original/74afd6be-c8ad-4a3c-862e-742ee9e21a7c.jpeg?im_w=720');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Santa Cruz</span><div class="prop-name">Sweet Chalet<br>Pool &amp; National Park</div><div class="prop-stars">★ 4.92</div></div>
+      </div>
+      <div class="prop-card" data-delay="150">
+        <div class="prop-img" style="background-image:url('picts/ritchi.png');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Noord</span><div class="prop-name">Modern Studio<br>Near Eagle Beach</div><div class="prop-stars">★ New</div></div>
+      </div>
+      <div class="prop-card" data-delay="300">
+        <div class="prop-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-U3RheVN1cHBseUxpc3Rpbmc6NDExNDM3MjA%3D/original/2dcb6c00-c5c4-4758-8809-3f7f8600698b.jpeg?im_w=720');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Paradera</span><div class="prop-name">Nature Lodge #1<br>Koeriboeri</div><div class="prop-stars">★ 4.97 · 102 reviews</div></div>
+      </div>
+      <div class="prop-card" data-delay="450">
+        <div class="prop-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-41146023/original/2a89e365-5b5c-4d7f-bf6e-a80dc11aad5c.jpeg?im_w=720');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Paradera</span><div class="prop-name">Nature Lodge #2<br>Guest Favorite ⭐</div><div class="prop-stars">★ 5.0 · 55 reviews</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 6 · PROPERTIES 2
+═══════════════════════════════════════════ -->
+<div class="scene" id="s6" data-label="OUR PROPERTIES">
+  <div class="scene-bg" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-46370030/original/910a3bd0-3faf-4572-9e34-1d26311c2bb8.jpeg?im_w=720');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(to bottom, rgba(10,10,20,0.75) 0%, rgba(26,58,92,0.6) 100%);"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div style="position:relative;z-index:10;width:100%;padding-top:80px;">
+    <div style="text-align:center;margin-bottom:16px;">
+      <div class="eyebrow" style="opacity:1;transform:none;">Top-Rated on Airbnb · Booking.com Partner</div>
+    </div>
+    <div class="prop-grid">
+      <div class="prop-card" data-delay="0">
+        <div class="prop-img" style="background-image:url('picts/FLAMINGO LODGE.avif');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Paradera</span><div class="prop-name">Nature Lodge #3<br>Koeriboeri</div><div class="prop-stars">★ 4.94 · 52 reviews</div></div>
+      </div>
+      <div class="prop-card" data-delay="150">
+        <div class="prop-img" style="background-image:url('picts/BANANAQUIT LODGE.avif');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Sero Cristal</span><div class="prop-name">Nature Lodge #4<br>Top 10% on Airbnb</div><div class="prop-stars">★ 4.95 · 43 reviews</div></div>
+      </div>
+      <div class="prop-card" data-delay="300">
+        <div class="prop-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-46370030/original/910a3bd0-3faf-4572-9e34-1d26311c2bb8.jpeg?im_w=720');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Sero Cristal</span><div class="prop-name">Nature Lodge #5<br>Guest Favorite ⭐</div><div class="prop-stars">★ 4.98 · 87 reviews</div></div>
+      </div>
+      <div class="prop-card" data-delay="450">
+        <div class="prop-img" style="background-image:url('https://a0.muscache.com/im/pictures/hosting/Hosting-1614532210588967996/original/ff76f34c-e455-4fb6-8ff3-f3d45f4f111d.jpeg?im_w=720');"></div>
+        <div class="prop-gradient"></div>
+        <div class="prop-info"><span class="prop-tag">Paradera</span><div class="prop-name">Tropical Oasis<br>Private Pool</div><div class="prop-stars">★ New</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 7 · WELLNESS & ROMANCE
+═══════════════════════════════════════════ -->
+<div class="scene" id="s7" data-label="ACTIVITIES · WELLNESS">
+  <div class="scene-bg" style="background-image:url('picts/1.webp');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(60,20,80,0.75),rgba(26,58,92,0.6));"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div style="position:relative;z-index:10;width:100%;padding-top:80px;">
+    <div class="act-section">
+      <div class="act-category-header">
+        <span class="act-cat-label">I. Signature Category</span>
+        <div class="act-cat-title">Wellness &amp; Romance</div>
+      </div>
+      <div class="act-grid cols-2">
+        <div class="act-card" data-delay="200">
+          <div class="act-img" style="background-image:url('picts/1.webp');"></div>
+          <div class="act-body">
+            <div class="act-name">Flying Dress Photo Shoot</div>
+            <div class="act-desc">Luxury gown flowing in the Caribbean breeze against Aruba's breathtaking turquoise waters. Professional photographer &amp; gowns included.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="400">
+          <div class="act-img" style="background-image:url('picts/2.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Floating Breakfast &amp; Massage</div>
+            <div class="act-desc">A professional massage on a private floating dock, surrounded by the crystal-clear waters of Savaneta. The perfect island morning.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 8 · SEA EXPEDITIONS
+═══════════════════════════════════════════ -->
+<div class="scene" id="s8" data-label="ACTIVITIES · SEA">
+  <div class="scene-bg" style="background-image:url('picts/3.jpg');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(10,30,70,0.78),rgba(26,58,92,0.5));"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div style="position:relative;z-index:10;width:100%;padding-top:80px;">
+    <div class="act-section">
+      <div class="act-category-header">
+        <span class="act-cat-label">II. Coastal Elegance</span>
+        <div class="act-cat-title">Sea Expeditions</div>
+      </div>
+      <div class="act-grid cols-3">
+        <div class="act-card" data-delay="150">
+          <div class="act-img" style="background-image:url('picts/3.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Private Boat Tour</div>
+            <div class="act-desc">Your captain, your itinerary. Snorkeling, hidden beaches, or golden sunset. Perfect for families, couples, or friends.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="350">
+          <div class="act-img" style="background-image:url('picts/4.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Catamaran Sailing</div>
+            <div class="act-desc">Open bar, snorkel stops at the best reefs and shipwrecks. Great vibes, music &amp; turquoise waters.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="550">
+          <div class="act-img" style="background-image:url('picts/5.png');"></div>
+          <div class="act-body">
+            <div class="act-name">Private Yacht Charter</div>
+            <div class="act-desc">All-inclusive luxury — open bar, tailored itinerary, spacious decks &amp; professional crew. The most exclusive way to see Aruba.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 9 · THRILLS & DISCOVERY
+═══════════════════════════════════════════ -->
+<div class="scene" id="s9" data-label="ACTIVITIES · THRILLS">
+  <div class="scene-bg" style="background-image:url('picts/6.webp');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(70,10,10,0.75),rgba(26,58,92,0.5));"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div style="position:relative;z-index:10;width:100%;padding-top:80px;">
+    <div class="act-section">
+      <div class="act-category-header">
+        <span class="act-cat-label">III. High-Speed</span>
+        <div class="act-cat-title">Thrills &amp; Discovery</div>
+      </div>
+      <div class="act-grid cols-3">
+        <div class="act-card" data-delay="150">
+          <div class="act-img" style="background-image:url('picts/6.webp');"></div>
+          <div class="act-body">
+            <div class="act-name">UTV Off-Road Adventure</div>
+            <div class="act-desc">Conquer desert trails on Aruba's North Coast. Natural Bridge, Cave Pool, hidden bays — the most exciting way to see the island.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="350">
+          <div class="act-img" style="background-image:url('picts/7.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Sea Bob Experience</div>
+            <div class="act-desc">Power through the water like a dolphin at high speed. Unforgettable underwater thrills for all ages and skill levels.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="550">
+          <div class="act-img" style="background-image:url('picts/8.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Jeep Safari</div>
+            <div class="act-desc">Hidden gems of Arikok National Park — secret spots only locals know. A unique off-the-beaten-path island adventure.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 10 · NATURE & ECO
+═══════════════════════════════════════════ -->
+<div class="scene" id="s10" data-label="ACTIVITIES · NATURE">
+  <div class="scene-bg" style="background-image:url('picts/9.webp');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(10,40,20,0.78),rgba(26,58,92,0.5));"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div style="position:relative;z-index:10;width:100%;padding-top:80px;">
+    <div class="act-section">
+      <div class="act-category-header">
+        <span class="act-cat-label">IV. Eco-Adventures</span>
+        <div class="act-cat-title">Nature &amp; Eco</div>
+      </div>
+      <div class="act-grid cols-4">
+        <div class="act-card" data-delay="100">
+          <div class="act-img" style="background-image:url('picts/9.webp');"></div>
+          <div class="act-body">
+            <div class="act-name">Horseback Riding</div>
+            <div class="act-desc">Sand dunes, rocky shores, stunning coastal views. For all levels.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="250">
+          <div class="act-img" style="background-image:url('picts/10.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Kayak Tours</div>
+            <div class="act-desc">Paddle through crystal-clear Caribbean waters, explore vibrant marine life.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="400">
+          <div class="act-img" style="background-image:url('picts/11.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Hiking Tours</div>
+            <div class="act-desc">Secret gems in the Aruba backyard — guided trails through stunning natural landscapes.</div>
+          </div>
+        </div>
+        <div class="act-card" data-delay="550">
+          <div class="act-img" style="background-image:url('picts/12.jpg');"></div>
+          <div class="act-body">
+            <div class="act-name">Dive &amp; Snorkel</div>
+            <div class="act-desc">Beginners to advanced — shipwrecks &amp; vibrant coral reefs for everyone.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 11 · WHY CHOOSE US
+═══════════════════════════════════════════ -->
+<div class="scene" id="s11" data-label="WHY CHOOSE US">
+  <div class="scene-bg" style="background-image:url('https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=1920&q=80');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(26,58,92,0.88),rgba(26,58,92,0.6));"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div style="position:relative;z-index:10;width:100%;padding-top:80px;">
+    <div style="text-align:center;margin-bottom:20px;">
+      <div class="eyebrow" style="opacity:1;transform:none;">Our Promise to You</div>
+    </div>
+    <div class="why-grid">
+      <div class="why-card" data-delay="100">
+        <div class="why-icon">🌴</div>
+        <div class="why-title">Local Expertise</div>
+        <div class="why-text">Born &amp; based in Aruba — we know every corner of the island</div>
+      </div>
+      <div class="why-card" data-delay="300">
+        <div class="why-icon">🔑</div>
+        <div class="why-title">Trusted by Owners</div>
+        <div class="why-text">Peace of mind, every single day — you're never just a number</div>
+      </div>
+      <div class="why-card" data-delay="500">
+        <div class="why-icon">📅</div>
+        <div class="why-title">Booking.com Partner</div>
+        <div class="why-text">Maximum visibility &amp; seamless bookings on top platforms</div>
+      </div>
+      <div class="why-card" data-delay="700">
+        <div class="why-icon">💬</div>
+        <div class="why-title">Personal Service</div>
+        <div class="why-text">You have our personal numbers — always reachable, always responsive</div>
+      </div>
+      <div class="why-card" data-delay="900">
+        <div class="why-icon">🎯</div>
+        <div class="why-title">Curated by Sophie</div>
+        <div class="why-text">Every experience handpicked — quality over quantity, always</div>
+      </div>
+    </div>
+    <div class="quote-block">
+      <div class="quote-text">"Sophie is a great host as well as a property manager. She goes above and beyond to make each of her guests feel special."</div>
+      <div class="quote-author">⭐⭐⭐⭐⭐ &nbsp;Tina Larkin · Google Reviews</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 12 · CONTACT & BOOKING
+═══════════════════════════════════════════ -->
+<div class="scene" id="s12" data-label="BOOK NOW">
+  <div class="scene-bg" style="background-image:url('picts/dividivi.jpg');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(26,58,92,0.88),rgba(26,58,92,0.65));"></div>
+  <div class="hbs-logo"><img src="assets/Logo.png" alt="Host By Sophie"/></div>
+  <div class="scene-content">
+    <div class="eyebrow">Book Your Aruba Experience</div>
+    <div class="gold-line"></div>
+    <h1 class="scene-title" style="font-size:clamp(28px,5vw,56px);">Ready to <em>explore?</em></h1>
+    <div class="contact-wrap">
+      <div class="contact-row" data-delay="400">
+        <span class="cr-icon">🌐</span>
+        <div class="cr-text"><span class="cr-label">Website</span><span class="cr-val">hostbysophie.com</span></div>
+      </div>
+      <div class="contact-row" data-delay="650">
+        <span class="cr-icon">💬</span>
+        <div class="cr-text"><span class="cr-label">WhatsApp</span><span class="cr-val">+297 593 18 74</span></div>
+      </div>
+      <div class="contact-row" data-delay="900">
+        <span class="cr-icon">📸</span>
+        <div class="cr-text"><span class="cr-label">Instagram &amp; Facebook</span><span class="cr-val">@hostbysophie</span></div>
+      </div>
+      <div class="contact-row" data-delay="1150">
+        <span class="cr-icon">✉️</span>
+        <div class="cr-text"><span class="cr-label">Email</span><span class="cr-val">hostbysophie@gmail.com</span></div>
+      </div>
+    </div>
+    <div class="notice-box">⏱ &nbsp;Book activities <strong>48–72 hours</strong> in advance &nbsp;·&nbsp; We reply within 24 hours</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCENE 13 · END CARD
+═══════════════════════════════════════════ -->
+<div class="scene" id="s13" data-label="HOST BY SOPHIE">
+  <div class="scene-bg" style="background-image:url('picts/trestrapi.webp');"></div>
+  <div class="scene-overlay" style="background:linear-gradient(160deg,rgba(26,58,92,0.82),rgba(0,0,0,0.65));"></div>
+  <div class="scene-content">
+    <div class="end-logo">
+      <img src="assets/Logo.png" alt="Host By Sophie" style="height:100px;"/>
+      <div class="end-brand">Host By Sophie</div>
+      <div class="end-tagline">Your Home in Paradise · Our Passion</div>
+      <div style="width:60px;height:1px;background:var(--gold);margin:8px auto;"></div>
+      <div class="end-contact">hostbysophie.com &nbsp;·&nbsp; +297 593 18 74 &nbsp;·&nbsp; @hostbysophie</div>
+      <div class="end-contact" style="margin-top:4px;font-size:10px;">Santa Cruz, Aruba &nbsp;·&nbsp; In partnership with Aruba Sol Energy</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /stage -->
+
+<!-- CONTROLS -->
+<div id="trans-overlay"></div>
+<div id="progress-bar" style="width:0%"></div>
+<div id="section-label">OPENING</div>
+<div id="timer">0:00</div>
+<div id="nav-dots"></div>
+<button id="play-btn">⏸ PAUSE</button>
+<button id="fs-btn">⛶ FULL SCREEN</button>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────
+const SCENES=[
+  {id:'s1',  label:'OPENING · ARUBA',         dur:5000},
+  {id:'s2',  label:'LOGO REVEAL',             dur:4500},
+  {id:'s3',  label:'WHO WE ARE',              dur:6000},
+  {id:'s4',  label:'OUR SERVICES',            dur:5500},
+  {id:'s5',  label:'PROPERTIES (1/2)',         dur:6000},
+  {id:'s6',  label:'PROPERTIES (2/2)',         dur:6000},
+  {id:'s7',  label:'WELLNESS & ROMANCE',       dur:5500},
+  {id:'s8',  label:'SEA EXPEDITIONS',          dur:5500},
+  {id:'s9',  label:'THRILLS & DISCOVERY',      dur:5500},
+  {id:'s10', label:'NATURE & ECO',             dur:5500},
+  {id:'s11', label:'WHY CHOOSE US',            dur:7000},
+  {id:'s12', label:'BOOK NOW',                 dur:6000},
+  {id:'s13', label:'HOST BY SOPHIE',           dur:5000},
+];
+const TOTAL=SCENES.reduce((a,s)=>a+s.dur,0);
+
+// ── NAV DOTS ──────────────────────────────────────────
+const dotsEl=document.getElementById('nav-dots');
+SCENES.forEach((_,i)=>{
+  const d=document.createElement('div');
+  d.className='dot'+(i===0?' active':'');
+  d.onclick=()=>goTo(i);
+  dotsEl.appendChild(d);
+});
+
+// ── STATE ─────────────────────────────────────────────
+let cur=0,elapsed=0,sceneEl=0,playing=true,lastTs=null;
+
+function fmt(ms){
+  const s=Math.floor(ms/1000);
+  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
+}
+
+// ── ANIMATE CHILDREN ─────────────────────────────────
+function animateChildren(sceneEl){
+  // prop cards
+  sceneEl.querySelectorAll('.prop-card').forEach(c=>{
+    const delay=parseInt(c.dataset.delay||0);
+    setTimeout(()=>c.classList.add('show'),delay+200);
+  });
+  // act cards
+  sceneEl.querySelectorAll('.act-card').forEach(c=>{
+    const delay=parseInt(c.dataset.delay||0);
+    setTimeout(()=>c.classList.add('show'),delay+200);
+  });
+  // why cards
+  sceneEl.querySelectorAll('.why-card').forEach(c=>{
+    const delay=parseInt(c.dataset.delay||0);
+    setTimeout(()=>c.classList.add('show'),delay+200);
+  });
+  // contact rows
+  sceneEl.querySelectorAll('.contact-row').forEach(c=>{
+    const delay=parseInt(c.dataset.delay||0);
+    setTimeout(()=>c.classList.add('show'),delay+200);
+  });
+}
+
+function resetChildren(el){
+  el.querySelectorAll('.prop-card,.act-card,.why-card,.contact-row').forEach(c=>c.classList.remove('show'));
+}
+
+// ── SHOW SCENE ────────────────────────────────────────
+function showScene(idx){
+  document.querySelectorAll('.scene').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===idx));
+  document.getElementById('section-label').textContent=SCENES[idx].label;
+  const el=document.getElementById(SCENES[idx].id);
+  el.classList.add('active');
+  setTimeout(()=>animateChildren(el),300);
+}
+
+function goTo(idx){
+  const old=document.getElementById(SCENES[cur].id);
+  resetChildren(old);
+  cur=idx;sceneEl=0;
+  elapsed=0;for(let i=0;i<idx;i++)elapsed+=SCENES[i].dur;
+  showScene(cur);
+}
+
+// ── LOOP ─────────────────────────────────────────────
+function tick(ts){
+  if(!playing){requestAnimationFrame(tick);return;}
+  if(lastTs===null){lastTs=ts;}
+  const dt=ts-lastTs;lastTs=ts;
+  elapsed+=dt;sceneEl+=dt;
+  document.getElementById('progress-bar').style.width=Math.min(100,(elapsed/TOTAL)*100)+'%';
+  document.getElementById('timer').textContent=fmt(elapsed);
+  if(sceneEl>=SCENES[cur].dur){
+    const old=document.getElementById(SCENES[cur].id);
+    resetChildren(old);
+    cur=(cur+1)%SCENES.length;
+    if(cur===0){elapsed=0;}
+    sceneEl=0;
+    showScene(cur);
+  }
+  requestAnimationFrame(tick);
+}
+
+// ── PLAY/PAUSE ────────────────────────────────────────
+document.getElementById('play-btn').onclick=()=>{
+  playing=!playing;
+  document.getElementById('play-btn').textContent=playing?'⏸ PAUSE':'▶ PLAY';
+  if(playing)lastTs=null;
+};
+
+// ── START ─────────────────────────────────────────────
+showScene(0);
+requestAnimationFrame(tick);
+
+// ── FULLSCREEN ───────────────────────────────────
+document.getElementById('fs-btn').onclick=()=>{
+  if(!document.fullscreenElement){
+    document.documentElement.requestFullscreen();
+    document.getElementById('fs-btn').textContent='✕ QUITTER';
+  } else {
+    document.exitFullscreen();
+    document.getElementById('fs-btn').textContent='⛶ PLEIN ÉCRAN';
+  }
+};
+document.addEventListener('fullscreenchange',()=>{
+  if(!document.fullscreenElement)
+    document.getElementById('fs-btn').textContent='⛶ PLEIN ÉCRAN';
+});
+
+// ── KEYBOARD ─────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight')goTo((cur+1)%SCENES.length);
+  if(e.key==='ArrowLeft')goTo((cur-1+SCENES.length)%SCENES.length);
+  if(e.key===' '){e.preventDefault();document.getElementById('play-btn').click();}
+});
+</script>
+</body>
+</html>
