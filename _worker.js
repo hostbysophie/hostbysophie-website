@@ -51,7 +51,7 @@ export default {
           'line_items[0][price_data][currency]':             'usd',
           'line_items[0][price_data][unit_amount]':          amountCents,
           'line_items[0][price_data][product_data][name]':   PRODUCT_NAMES[type],
-          'line_items[0][price_data][product_data][description]': ref || '',
+          ...(ref ? { 'line_items[0][price_data][product_data][description]': ref } : {}),
           'line_items[0][quantity]':                         '1',
           'mode':                                            'payment',
           'success_url':                                     `${origin}/payment-success.html?session_id={CHECKOUT_SESSION_ID}`,
