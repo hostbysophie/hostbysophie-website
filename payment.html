@@ -171,6 +171,11 @@
             <span class="lbl">Owner Invoice</span>
             <span class="sub">Management fee / maintenance</span>
           </button>
+          <button type="button" class="type-btn" data-type="tips" onclick="setType('tips', this)" style="grid-column: span 2;">
+            <span class="icon">🙏</span>
+            <span class="lbl">Tips & Gratuity</span>
+            <span class="sub">Tip for your concierge, guide or host team</span>
+          </button>
         </div>
 
         <form id="payForm" onsubmit="handlePay(event)" novalidate>
@@ -263,6 +268,7 @@
       concierge: { title: 'Concierge service', desc: 'Airport transfer, groceries, tours, private chef, and more.' },
       deposit:   { title: 'Security deposit',  desc: 'Refundable security guarantee for your rental stay.' },
       invoice:   { title: 'Owner invoice',     desc: 'Management fee, maintenance or other invoiced service.' },
+      tips:      { title: 'Tips & Gratuity',   desc: 'Show your appreciation to your concierge, guide or host team.' },
     };
     let currentType = 'booking';
 
@@ -278,7 +284,7 @@
     function updateSummary() {
       const amt = parseFloat(document.getElementById('payAmount').value) || 0;
       const fee = amt > 0 ? amt * 0.029 + 0.30 : 0;
-      document.getElementById('amtEcho').textContent  = amt.toFixed(2);
+      document.getElementById('amtEcho').textContent  = (amt + fee).toFixed(2);
       document.getElementById('sumSub').textContent   = '$' + amt.toFixed(2);
       document.getElementById('sumFee').textContent   = '$' + fee.toFixed(2);
       document.getElementById('sumTotal').textContent = '$' + (amt + fee).toFixed(2);
@@ -310,6 +316,10 @@
       if (!amount || amount < 1)    return showError('Please enter a valid amount (minimum $1.00).');
       if (!ref)                     return showError('Please enter a designation (booking ID or description).');
 
+      // Gross-up: client pays Stripe fee so HBS receives exactly `amount`
+      const stripeFee    = Math.round((amount * 0.029 + 0.30) * 100) / 100;
+      const chargeAmount = Math.round((amount + stripeFee) * 100) / 100;
+
       // Show loading
       document.getElementById('loadingOverlay').classList.add('show');
 
@@ -317,7 +327,7 @@
         const res = await fetch('/create-checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, ref, amount, type: currentType }),
+          body: JSON.stringify({ name, email, ref, amount: chargeAmount, type: currentType }),
         });
 
         const data = await res.json();
