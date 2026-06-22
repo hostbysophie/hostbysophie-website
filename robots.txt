@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /portal.html
+Disallow: /sign.html
+Disallow: /tv.html
+Disallow: /payment-success.html
+
+Sitemap: https://hostbysophie.com/sitemap.xml
