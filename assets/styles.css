@@ -220,36 +220,31 @@ textarea { resize: vertical; min-height: 120px; }
 /* ── TOP BAR NEWSLETTER ──────────────────────────────────── */
 .topbar-newsletter {
   position: sticky; top: 0; z-index: 1001;
-  background: linear-gradient(90deg, #b8860b, var(--gold), #e8a020, var(--gold), #b8860b);
-  background-size: 300% 100%;
-  animation: shimmer 4s linear infinite;
+  background: var(--ocean);
   color: var(--white);
-  padding: 10px 20px;
+  padding: 9px 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
-  position: relative;
   text-align: center;
+  border-bottom: 2px solid var(--gold);
 }
-@keyframes shimmer {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 300% 50%; }
-}
-.topbar-icon { font-size: 1.2rem; animation: pulse-icon 1.4s ease-in-out infinite; flex-shrink: 0; }
-.topbar-text { font-size: .9rem; }
+.topbar-icon { font-size: 1rem; flex-shrink: 0; }
+.topbar-text { font-size: .85rem; opacity: .92; }
+.topbar-text strong { font-weight: 600; }
 .topbar-btn {
-  background: var(--white); color: var(--gold); border: none;
-  border-radius: 999px; padding: 6px 20px; font-weight: 700; font-size: .85rem;
+  background: transparent; color: var(--white); border: 1px solid rgba(255,255,255,.5);
+  border-radius: 999px; padding: 5px 18px; font-weight: 600; font-size: .82rem;
   cursor: pointer; white-space: nowrap; flex-shrink: 0;
-  transition: transform .15s, box-shadow .15s;
+  transition: background .2s, border-color .2s;
 }
-.topbar-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.topbar-btn:hover { background: rgba(255,255,255,.15); border-color: var(--white); }
 .topbar-close {
   position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
-  background: none; border: none; color: rgba(255,255,255,.7);
-  font-size: 1rem; cursor: pointer; line-height: 1; padding: 4px;
+  background: none; border: none; color: rgba(255,255,255,.5);
+  font-size: .9rem; cursor: pointer; line-height: 1; padding: 4px;
 }
 .topbar-close:hover { color: var(--white); }
 
