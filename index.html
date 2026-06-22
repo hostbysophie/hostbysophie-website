@@ -98,6 +98,33 @@
     </div>
   </header>
 
+  <!-- ============================== NEWSLETTER HERO BAND ============================== -->
+  <div class="newsletter-band">
+    <div class="newsletter-band-inner">
+      <div class="newsletter-band-text">
+        <span class="newsletter-pulse">✉</span>
+        <div>
+          <strong>Stay Connected — Aruba Insider Tips &amp; Exclusive Offers</strong>
+          <span>Join our newsletter. No spam, just Aruba.</span>
+        </div>
+      </div>
+      <button class="newsletter-band-btn" onclick="document.getElementById('newsletterModal').classList.add('open'); document.body.style.overflow='hidden'">
+        Subscribe Now ↗
+      </button>
+    </div>
+  </div>
+
+  <!-- Newsletter Modal -->
+  <div id="newsletterModal" class="modal-overlay" onclick="if(event.target===this){this.classList.remove('open');document.body.style.overflow='';}">
+    <div class="modal-box newsletter-modal-box">
+      <button class="modal-close" onclick="document.getElementById('newsletterModal').classList.remove('open');document.body.style.overflow='';">&times;</button>
+      <span class="eyebrow" style="color:var(--gold);">Stay Connected</span>
+      <h3 style="margin:8px 0 4px;">Aruba Insider Newsletter</h3>
+      <p style="color:var(--ink-soft);font-size:.95rem;margin-bottom:16px;">Exclusive tips, property news and special offers — straight from Sophie &amp; Stéphane.</p>
+      <iframe width="540" height="305" src="https://4fca188b.sibforms.com/v2/serve/MUIFAAEwJDXlnHksbKETeWPyw9zzluxceoeUPIaHizFzE1gVNdrSDuDMngqu0RCrey0XpttUyTxEdsOCR5QMsHZXtUVjgYa5qx1XIXbMy513EDjkHuP8-MzaWv-qGLiDfZdFI2TwES_napev4WNfAzegxvDU35f1LyUB5Gm4Iomx90UjNXMa5tTjjixcea3pUp9u9myLDgD66rMeiA==" frameborder="0" scrolling="auto" allowfullscreen style="display:block;margin:0 auto;max-width:100%;border-radius:8px;"></iframe>
+    </div>
+  </div>
+
   <!-- ============================== SERVICES ============================== -->
   <section id="services">
     <div class="container">
@@ -506,6 +533,27 @@
           </div>
           <button type="submit" class="btn btn-primary">Send message</button>
         </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== NEWSLETTER SECTION ============================== -->
+  <section class="newsletter-section">
+    <div class="container">
+      <div class="newsletter-grid reveal">
+        <div class="newsletter-copy">
+          <span class="eyebrow" style="color:var(--gold);">Stay Connected</span>
+          <h2>Aruba Insider Newsletter</h2>
+          <p>Property tips, seasonal offers, and local secrets — delivered personally by Sophie &amp; Stéphane. No spam, ever.</p>
+          <ul class="newsletter-perks">
+            <li>🌴 Aruba travel &amp; lifestyle tips</li>
+            <li>🏡 Exclusive rental deals for subscribers</li>
+            <li>📊 Property investment insights</li>
+          </ul>
+        </div>
+        <div class="newsletter-form-wrap">
+          <iframe width="540" height="305" src="https://4fca188b.sibforms.com/v2/serve/MUIFAAEwJDXlnHksbKETeWPyw9zzluxceoeUPIaHizFzE1gVNdrSDuDMngqu0RCrey0XpttUyTxEdsOCR5QMsHZXtUVjgYa5qx1XIXbMy513EDjkHuP8-MzaWv-qGLiDfZdFI2TwES_napev4WNfAzegxvDU35f1LyUB5Gm4Iomx90UjNXMa5tTjjixcea3pUp9u9myLDgD66rMeiA==" frameborder="0" scrolling="auto" allowfullscreen style="display:block;margin:0 auto;max-width:100%;border-radius:12px;"></iframe>
+        </div>
       </div>
     </div>
   </section>
