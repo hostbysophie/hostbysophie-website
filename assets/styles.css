@@ -217,6 +217,41 @@ input::placeholder, textarea::placeholder { color: var(--ink-soft); opacity: .7;
 input:focus, select:focus, textarea:focus { border-color: var(--ocean); box-shadow: 0 0 0 3px rgba(26,74,107,.1); }
 textarea { resize: vertical; min-height: 120px; }
 
+/* ── TOP BAR NEWSLETTER ──────────────────────────────────── */
+.topbar-newsletter {
+  background: linear-gradient(90deg, #b8860b, var(--gold), #e8a020, var(--gold), #b8860b);
+  background-size: 300% 100%;
+  animation: shimmer 4s linear infinite;
+  color: var(--white);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  position: relative;
+  text-align: center;
+}
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 300% 50%; }
+}
+.topbar-icon { font-size: 1.2rem; animation: pulse-icon 1.4s ease-in-out infinite; flex-shrink: 0; }
+.topbar-text { font-size: .9rem; }
+.topbar-btn {
+  background: var(--white); color: var(--gold); border: none;
+  border-radius: 999px; padding: 6px 20px; font-weight: 700; font-size: .85rem;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: transform .15s, box-shadow .15s;
+}
+.topbar-btn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,.2); }
+.topbar-close {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; color: rgba(255,255,255,.7);
+  font-size: 1rem; cursor: pointer; line-height: 1; padding: 4px;
+}
+.topbar-close:hover { color: var(--white); }
+
 /* ── NEWSLETTER BAND ─────────────────────────────────────── */
 .newsletter-band {
   background: linear-gradient(90deg, var(--ocean) 0%, #0d3a5c 100%);
