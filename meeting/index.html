@@ -325,13 +325,13 @@ async function processRecording(){
 
     // 2. transcript
     setStep(2,"active");
-    const body = {audio_url: upload_url, speaker_labels: true, speech_model: "universal"};
+    const body = {audio_url: upload_url, speaker_labels: true, speech_models: ["universal-3-5-pro","universal-2"]};
     if(store.spokenLang==="auto") body.language_detection = true;
     else body.language_code = store.spokenLang;
     const tr = await fetch(API+"/v2/transcript", {method:"POST",
       headers:{...headers,"content-type":"application/json"}, body: JSON.stringify(body)});
-    if(!tr.ok) throw new Error("Création de la transcription échouée ("+tr.status+").");
     const trJson = await tr.json();
+    if(!tr.ok) throw new Error("Transcription refusée : "+(trJson.error||("HTTP "+tr.status)));
     let t = trJson;
     while(t.status!=="completed"){
       if(t.status==="error") throw new Error("Transcription : "+t.error);
