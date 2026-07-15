@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1A3A5C">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>HBS Meeting</title>
+<style>
+  :root{
+    --navy:#1A3A5C; --gold:#B8953D; --slate:#1C2B36; --grey:#6B7B85;
+    --steel:#E7ECF1; --cream:#FAF5ED; --white:#fff; --red:#C0392B; --green:#2E7D51;
+  }
+  *{box-sizing:border-box; margin:0; padding:0; font-family:Arial, Helvetica, sans-serif;}
+  body{background:#F4F6F8; color:var(--slate); min-height:100vh;}
+  header{background:var(--navy); color:#fff; padding:14px 16px; display:flex; align-items:center; gap:12px;
+    position:sticky; top:0; z-index:10; padding-top:calc(14px + env(safe-area-inset-top));}
+  header img{height:36px; background:#fff; border-radius:8px; padding:3px;}
+  header h1{font-size:17px; font-weight:bold; flex:1;}
+  header .tag{font-size:11px; color:var(--gold); font-style:italic; display:block;}
+  header button{background:none; border:none; color:#fff; font-size:22px; padding:4px 8px;}
+  main{padding:16px; max-width:640px; margin:0 auto; padding-bottom:40px;}
+  .screen{display:none;} .screen.active{display:block;}
+  .card{background:#fff; border-radius:12px; padding:16px; margin-bottom:14px; box-shadow:0 1px 4px rgba(26,58,92,.08);}
+  h2{color:var(--navy); font-size:16px; margin-bottom:10px;}
+  .btn{display:block; width:100%; border:none; border-radius:10px; padding:15px; font-size:16px; font-weight:bold; cursor:pointer;}
+  .btn-primary{background:var(--navy); color:#fff;}
+  .btn-gold{background:var(--gold); color:#fff;}
+  .btn-outline{background:#fff; color:var(--navy); border:2px solid var(--navy);}
+  .btn-danger{background:var(--red); color:#fff;}
+  .btn:disabled{opacity:.5;}
+  .btn+.btn{margin-top:10px;}
+  .recbtn{width:150px; height:150px; border-radius:50%; margin:30px auto; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:6px; font-size:16px; border:6px solid var(--steel);}
+  .recbtn.recording{border-color:var(--red); animation:pulse 1.6s infinite;}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(192,57,43,.4)}70%{box-shadow:0 0 0 22px rgba(192,57,43,0)}100%{box-shadow:0 0 0 0 rgba(192,57,43,0)}}
+  .timer{font-size:40px; font-weight:bold; color:var(--navy); text-align:center; font-variant-numeric:tabular-nums;}
+  .status{text-align:center; color:var(--grey); margin:8px 0 16px; font-size:14px; font-style:italic;}
+  .row{display:flex; gap:10px;} .row .btn{flex:1;}
+  input[type=text], input[type=password], select{width:100%; padding:12px; border:1px solid #C9D4DD; border-radius:8px; font-size:15px; background:#fff;}
+  label{display:block; font-weight:bold; color:var(--navy); font-size:13px; margin:12px 0 6px;}
+  .step{display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--steel); font-size:15px;}
+  .step:last-child{border-bottom:none;}
+  .step .dot{width:22px; height:22px; border-radius:50%; background:var(--steel); flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:13px;}
+  .step.done .dot{background:var(--green);} .step.active .dot{background:var(--gold); animation:pulse 1.6s infinite;}
+  .tabs{display:flex; border-bottom:2px solid var(--steel); margin-bottom:12px;}
+  .tabs button{flex:1; background:none; border:none; padding:12px; font-size:15px; font-weight:bold; color:var(--grey); border-bottom:3px solid transparent; cursor:pointer;}
+  .tabs button.active{color:var(--navy); border-bottom-color:var(--gold);}
+  .utt{margin-bottom:12px;}
+  .utt .who{font-weight:bold; color:var(--navy); font-size:13px;}
+  .utt .txt{font-size:15px; line-height:1.45;}
+  .chip{display:inline-block; background:var(--cream); border:1px solid var(--gold); color:var(--navy);
+    border-radius:16px; padding:6px 12px; font-size:13px; margin:0 6px 6px 0; cursor:pointer;}
+  .summary{font-size:15px; line-height:1.55; white-space:pre-wrap;}
+  .summary h3{color:var(--navy); margin:14px 0 6px; font-size:15px;}
+  .hist{display:flex; justify-content:space-between; align-items:center; padding:12px 4px; border-bottom:1px solid var(--steel); cursor:pointer;}
+  .hist:last-child{border-bottom:none;}
+  .hist .t{font-weight:bold; font-size:14px; color:var(--navy);}
+  .hist .d{font-size:12px; color:var(--grey);}
+  .hist .del{color:var(--red); background:none; border:none; font-size:18px; padding:6px;}
+  .banner{background:var(--cream); border-left:4px solid var(--gold); padding:10px 12px; border-radius:6px; font-size:13px; margin-bottom:14px;}
+  .err{background:#FDECEA; border-left:4px solid var(--red); color:var(--red);}
+  footer{text-align:center; color:var(--grey); font-size:11px; padding:14px; line-height:1.5;}
+  .back{color:var(--gold); background:none; border:none; font-size:15px; font-weight:bold; margin-bottom:10px; cursor:pointer;}
+</style>
+</head>
+<body>
+<header>
+  <img src="icon-192.png" alt="HBS">
+  <h1>HBS Meeting<span class="tag">Enregistrer · Transcrire · Résumer</span></h1>
+  <button onclick="show('settings')" title="Réglages">⚙</button>
+</header>
+<main>
+
+<!-- ================= HOME ================= -->
+<section id="home" class="screen active">
+  <div id="noKeyBanner" class="banner err" style="display:none">
+    ⚠ Clé API manquante. Va dans ⚙ Réglages pour la configurer (compte gratuit sur assemblyai.com).
+  </div>
+  <div class="card" style="text-align:center">
+    <button class="btn-primary recbtn btn" onclick="startRecording()">🎙️<br>Enregistrer<br>une réunion</button>
+    <p class="status">Conseil : présentez-vous à tour de rôle en début de réunion pour faciliter l'identification des voix.</p>
+  </div>
+  <div class="card">
+    <h2>Historique</h2>
+    <div id="historyList"><p class="status">Aucune réunion enregistrée.</p></div>
+  </div>
+</section>
+
+<!-- ================= RECORD ================= -->
+<section id="record" class="screen">
+  <div class="card" style="text-align:center">
+    <div class="timer" id="timer">00:00</div>
+    <p class="status" id="recStatus">Enregistrement en cours…</p>
+    <div class="row">
+      <button class="btn btn-outline" id="pauseBtn" onclick="togglePause()">⏸ Pause</button>
+      <button class="btn btn-danger" onclick="stopRecording()">⏹ Terminer</button>
+    </div>
+  </div>
+  <div class="banner">🔒 L'écran reste allumé pendant l'enregistrement. Ne fermez pas l'application.</div>
+</section>
+
+<!-- ================= REVIEW (after stop) ================= -->
+<section id="review" class="screen">
+  <div class="card">
+    <h2>Réunion enregistrée ✔</h2>
+    <p class="status" id="reviewInfo"></p>
+    <label>Titre de la réunion</label>
+    <input type="text" id="meetingTitle" placeholder="Ex : Réunion propriétaire C7">
+    <div style="margin-top:14px">
+      <button class="btn btn-gold" onclick="processRecording()">✨ Transcrire &amp; résumer</button>
+      <button class="btn btn-outline" onclick="downloadAudio()">⬇ Sauvegarder l'audio</button>
+      <button class="btn btn-outline" onclick="discardRecording()">🗑 Abandonner</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROCESSING ================= -->
+<section id="processing" class="screen">
+  <div class="card">
+    <h2>Traitement en cours…</h2>
+    <div class="step" id="st1"><span class="dot">1</span> Envoi de l'audio</div>
+    <div class="step" id="st2"><span class="dot">2</span> Transcription française + voix</div>
+    <div class="step" id="st3"><span class="dot">3</span> Résumé intelligent</div>
+    <p class="status" id="procStatus">Cela prend environ 15–30&nbsp;% de la durée de la réunion.</p>
+  </div>
+  <div id="procError" class="banner err" style="display:none"></div>
+  <button class="btn btn-outline" id="retryBtn" style="display:none" onclick="processRecording()">↻ Réessayer</button>
+</section>
+
+<!-- ================= RESULT ================= -->
+<section id="result" class="screen">
+  <button class="back" onclick="show('home'); renderHistory()">← Accueil</button>
+  <div class="card">
+    <h2 id="resTitle"></h2>
+    <p class="status" id="resInfo" style="text-align:left"></p>
+    <div><strong style="color:var(--navy);font-size:13px">Participants (touchez pour renommer) :</strong><br>
+      <div id="speakerChips" style="margin-top:8px"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      <button id="tabSum" class="active" onclick="setTab('sum')">Résumé</button>
+      <button id="tabTr" onclick="setTab('tr')">Transcription</button>
+    </div>
+    <div id="paneSum" class="summary"></div>
+    <div id="paneTr" style="display:none"></div>
+  </div>
+  <button class="btn btn-gold" onclick="regenSummary()">↻ Régénérer le résumé (après renommage)</button>
+  <button class="btn btn-primary" onclick="shareResult()">📤 Partager</button>
+  <button class="btn btn-outline" onclick="downloadResult()">⬇ Télécharger (.txt)</button>
+</section>
+
+<!-- ================= SETTINGS ================= -->
+<section id="settings" class="screen">
+  <button class="back" onclick="show('home')">← Accueil</button>
+  <div class="card">
+    <h2>Réglages</h2>
+    <label>Clé API AssemblyAI</label>
+    <input type="password" id="apiKey" placeholder="Collez votre clé ici">
+    <p class="status" style="text-align:left">Créez un compte gratuit sur <strong>assemblyai.com</strong> → Dashboard → copiez votre clé API. Coût ≈ 0,30 $/heure de réunion, sans abonnement.</p>
+    <label>Langue du résumé</label>
+    <select id="sumLang">
+      <option value="fr">Français</option>
+      <option value="en">English</option>
+    </select>
+    <label>Langue parlée en réunion</label>
+    <select id="spokenLang">
+      <option value="fr">Français</option>
+      <option value="en">English</option>
+      <option value="auto">Détection automatique</option>
+    </select>
+    <div style="margin-top:16px">
+      <button class="btn btn-primary" onclick="saveSettings()">Enregistrer</button>
+    </div>
+  </div>
+</section>
+
+</main>
+<footer>hostbysophie@gmail.com · +297 593 18 74 · hostbysophie.com · @hostbysophie</footer>
+
+<script>
+"use strict";
+const API = "https://api.assemblyai.com";
+const LEMUR_MODELS = ["anthropic/claude-sonnet-4-20250514","anthropic/claude-3-5-haiku-20241022","default"];
+const $ = id => document.getElementById(id);
+const store = {
+  get key(){ return localStorage.getItem("hbs_key")||""; },
+  set key(v){ localStorage.setItem("hbs_key", v); },
+  get sumLang(){ return localStorage.getItem("hbs_sumlang")||"fr"; },
+  set sumLang(v){ localStorage.setItem("hbs_sumlang", v); },
+  get spokenLang(){ return localStorage.getItem("hbs_spokenlang")||"fr"; },
+  set spokenLang(v){ localStorage.setItem("hbs_spokenlang", v); },
+  get history(){ try{return JSON.parse(localStorage.getItem("hbs_hist")||"[]");}catch(e){return[];} },
+  set history(v){
+    // keep newest sessions that fit under ~4MB
+    let arr = v;
+    while(arr.length){
+      try{ localStorage.setItem("hbs_hist", JSON.stringify(arr)); return; }
+      catch(e){ arr = arr.slice(0, arr.length-1); }
+    }
+    localStorage.setItem("hbs_hist","[]");
+  }
+};
+
+let mediaRecorder=null, chunks=[], startTime=0, pausedMs=0, pauseStart=0, timerInt=null, wakeLock=null;
+let currentBlob=null, currentSession=null;
+
+/* ---------- navigation ---------- */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  $(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+function setTab(t){
+  $("tabSum").classList.toggle("active", t==="sum");
+  $("tabTr").classList.toggle("active", t==="tr");
+  $("paneSum").style.display = t==="sum"?"":"none";
+  $("paneTr").style.display = t==="tr"?"":"none";
+}
+
+/* ---------- settings ---------- */
+function loadSettings(){
+  $("apiKey").value = store.key;
+  $("sumLang").value = store.sumLang;
+  $("spokenLang").value = store.spokenLang;
+  $("noKeyBanner").style.display = store.key ? "none" : "";
+}
+function saveSettings(){
+  store.key = $("apiKey").value.trim();
+  store.sumLang = $("sumLang").value;
+  store.spokenLang = $("spokenLang").value;
+  loadSettings();
+  show("home");
+}
+
+/* ---------- recording ---------- */
+async function startRecording(){
+  if(!store.key){ show("settings"); return; }
+  try{
+    const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:true}});
+    const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
+               : MediaRecorder.isTypeSupported("audio/mp4") ? "audio/mp4" : "";
+    mediaRecorder = new MediaRecorder(stream, mime?{mimeType:mime, audioBitsPerSecond:64000}:{});
+    chunks=[]; pausedMs=0;
+    mediaRecorder.ondataavailable = e => { if(e.data.size) chunks.push(e.data); };
+    mediaRecorder.onstop = onRecordingStopped;
+    mediaRecorder.start(1000);
+    startTime = Date.now();
+    timerInt = setInterval(updateTimer, 500);
+    try{ wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+    $("pauseBtn").textContent="⏸ Pause";
+    $("recStatus").textContent="Enregistrement en cours…";
+    show("record");
+  }catch(err){
+    alert("Micro inaccessible : "+err.message+"\nVérifiez les permissions du navigateur.");
+  }
+}
+function updateTimer(){
+  let ms = Date.now()-startTime-pausedMs;
+  if(mediaRecorder && mediaRecorder.state==="paused") ms = pauseStart-startTime-pausedMs;
+  const s = Math.floor(ms/1000);
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  $("timer").textContent = (h?String(h).padStart(2,"0")+":":"") + String(m).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+}
+function togglePause(){
+  if(!mediaRecorder) return;
+  if(mediaRecorder.state==="recording"){
+    mediaRecorder.pause(); pauseStart=Date.now();
+    $("pauseBtn").textContent="▶ Reprendre";
+    $("recStatus").textContent="En pause";
+  }else if(mediaRecorder.state==="paused"){
+    mediaRecorder.resume(); pausedMs += Date.now()-pauseStart;
+    $("pauseBtn").textContent="⏸ Pause";
+    $("recStatus").textContent="Enregistrement en cours…";
+  }
+}
+function stopRecording(){
+  if(mediaRecorder && mediaRecorder.state!=="inactive") mediaRecorder.stop();
+  clearInterval(timerInt);
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
+}
+function onRecordingStopped(){
+  mediaRecorder.stream.getTracks().forEach(t=>t.stop());
+  currentBlob = new Blob(chunks, {type: mediaRecorder.mimeType||"audio/webm"});
+  const dur = $("timer").textContent;
+  const mb = (currentBlob.size/1048576).toFixed(1);
+  $("reviewInfo").textContent = `Durée : ${dur} · Taille : ${mb} Mo`;
+  $("meetingTitle").value = "Réunion du " + new Date().toLocaleDateString("fr-FR");
+  show("review");
+}
+function discardRecording(){
+  if(confirm("Abandonner cet enregistrement ?")){ currentBlob=null; show("home"); }
+}
+function downloadAudio(){
+  if(!currentBlob) return;
+  const ext = (currentBlob.type.includes("mp4"))?"m4a":"webm";
+  triggerDownload(currentBlob, sanitize($("meetingTitle").value||"reunion")+"."+ext);
+}
+
+/* ---------- processing pipeline ---------- */
+function setStep(n, state){ // state: active|done|reset
+  const el = $("st"+n);
+  el.classList.remove("active","done");
+  if(state==="active") el.classList.add("active");
+  if(state==="done"){ el.classList.add("done"); el.querySelector(".dot").textContent="✓"; }
+  if(state==="reset") el.querySelector(".dot").textContent=n;
+}
+async function processRecording(){
+  if(!currentBlob){ show("home"); return; }
+  show("processing");
+  $("procError").style.display="none"; $("retryBtn").style.display="none";
+  [1,2,3].forEach(n=>setStep(n,"reset"));
+  const headers = {authorization: store.key};
+  try{
+    // 1. upload
+    setStep(1,"active");
+    const up = await fetch(API+"/v2/upload", {method:"POST", headers, body:currentBlob});
+    if(!up.ok) throw new Error("Envoi échoué ("+up.status+") — vérifiez la clé API.");
+    const {upload_url} = await up.json();
+    setStep(1,"done");
+
+    // 2. transcript
+    setStep(2,"active");
+    const body = {audio_url: upload_url, speaker_labels: true, speech_model: "universal"};
+    if(store.spokenLang==="auto") body.language_detection = true;
+    else body.language_code = store.spokenLang;
+    const tr = await fetch(API+"/v2/transcript", {method:"POST",
+      headers:{...headers,"content-type":"application/json"}, body: JSON.stringify(body)});
+    if(!tr.ok) throw new Error("Création de la transcription échouée ("+tr.status+").");
+    const trJson = await tr.json();
+    let t = trJson;
+    while(t.status!=="completed"){
+      if(t.status==="error") throw new Error("Transcription : "+t.error);
+      await new Promise(r=>setTimeout(r,3000));
+      const p = await fetch(API+"/v2/transcript/"+trJson.id, {headers});
+      t = await p.json();
+      $("procStatus").textContent = "Transcription : "+(t.status==="processing"?"analyse en cours…":t.status);
+    }
+    setStep(2,"done");
+
+    // 3. summary
+    setStep(3,"active");
+    $("procStatus").textContent = "Génération du résumé…";
+    const utterances = (t.utterances||[]).map(u=>({speaker:u.speaker, text:u.text}));
+    currentSession = {
+      id: Date.now(), transcriptId: t.id,
+      title: $("meetingTitle").value.trim()||"Réunion",
+      date: new Date().toISOString(),
+      duration: Math.round((t.audio_duration||0)/60),
+      utterances, speakers:{}, summary:""
+    };
+    [...new Set(utterances.map(u=>u.speaker))].forEach(s=>currentSession.speakers[s]="Intervenant "+s);
+    currentSession.summary = await lemurSummary(currentSession);
+    setStep(3,"done");
+
+    // save + show
+    const h = store.history; h.unshift(currentSession); store.history = h;
+    currentBlob = null;
+    renderResult(currentSession);
+  }catch(err){
+    $("procError").textContent = "⚠ "+err.message;
+    $("procError").style.display="";
+    $("retryBtn").style.display="";
+  }
+}
+async function lemurSummary(sess){
+  const names = Object.entries(sess.speakers).map(([k,v])=>`Speaker ${k} = ${v}`).join(", ");
+  const lang = store.sumLang==="en" ? "in English" : "en français";
+  const prompt = `You are the assistant of Host By Sophie, a vacation rental agency in Aruba. `+
+    `Summarize this meeting transcript ${lang}. Speaker mapping: ${names}. Structure exactly:\n`+
+    `PARTICIPANTS:\nKEY POINTS: (bullets)\nDECISIONS: (bullets)\nACTION ITEMS: (bullets, with owner if identifiable)\n`+
+    `Be concise and professional. Use the mapped speaker names.`;
+  let lastErr = "résumé indisponible";
+  for(const model of LEMUR_MODELS){
+    try{
+      const r = await fetch(API+"/lemur/v3/generate/task", {method:"POST",
+        headers:{authorization:store.key,"content-type":"application/json"},
+        body: JSON.stringify({transcript_ids:[sess.transcriptId], prompt, final_model:model, max_output_size:3000})});
+      const j = await r.json();
+      if(r.ok && j.response) return j.response.trim();
+      lastErr = j.error||("HTTP "+r.status);
+    }catch(e){ lastErr = e.message; }
+  }
+  return "⚠ Résumé indisponible ("+lastErr+"). La transcription reste accessible dans l'onglet Transcription.";
+}
+
+/* ---------- result rendering ---------- */
+function renderResult(sess){
+  currentSession = sess;
+  $("resTitle").textContent = sess.title;
+  $("resInfo").textContent = new Date(sess.date).toLocaleString("fr-FR") + (sess.duration?` · ${sess.duration} min`:"");
+  const chips = $("speakerChips"); chips.innerHTML="";
+  Object.keys(sess.speakers).forEach(k=>{
+    const c = document.createElement("span");
+    c.className="chip"; c.textContent="🗣 "+sess.speakers[k];
+    c.onclick = ()=>{
+      const n = window.prompt("Nom de cet intervenant :", sess.speakers[k]);
+      if(n && n.trim()){ sess.speakers[k]=n.trim(); persist(sess); renderResult(sess); }
+    };
+    chips.appendChild(c);
+  });
+  $("paneSum").textContent = sess.summary;
+  const tr = $("paneTr"); tr.innerHTML="";
+  sess.utterances.forEach(u=>{
+    const d = document.createElement("div"); d.className="utt";
+    const w = document.createElement("div"); w.className="who"; w.textContent = sess.speakers[u.speaker]||u.speaker;
+    const x = document.createElement("div"); x.className="txt"; x.textContent = u.text;
+    d.appendChild(w); d.appendChild(x); tr.appendChild(d);
+  });
+  setTab("sum");
+  show("result");
+}
+function persist(sess){
+  const h = store.history;
+  const i = h.findIndex(x=>x.id===sess.id);
+  if(i>=0){ h[i]=sess; store.history=h; }
+}
+async function regenSummary(){
+  if(!currentSession) return;
+  $("paneSum").textContent = "Génération du résumé…"; setTab("sum");
+  currentSession.summary = await lemurSummary(currentSession);
+  persist(currentSession);
+  $("paneSum").textContent = currentSession.summary;
+}
+function resultText(sess){
+  let out = sess.title+"\n"+new Date(sess.date).toLocaleString("fr-FR")+"\n\n=== RÉSUMÉ ===\n"+sess.summary+"\n\n=== TRANSCRIPTION ===\n";
+  sess.utterances.forEach(u=>{ out += (sess.speakers[u.speaker]||u.speaker)+" : "+u.text+"\n\n"; });
+  return out;
+}
+function downloadResult(){
+  if(!currentSession) return;
+  triggerDownload(new Blob([resultText(currentSession)],{type:"text/plain;charset=utf-8"}), sanitize(currentSession.title)+".txt");
+}
+async function shareResult(){
+  if(!currentSession) return;
+  const text = resultText(currentSession);
+  if(navigator.share){ try{ await navigator.share({title:currentSession.title, text}); return; }catch(e){} }
+  await navigator.clipboard.writeText(text);
+  alert("Copié dans le presse-papiers.");
+}
+
+/* ---------- history ---------- */
+function renderHistory(){
+  const list = $("historyList"); const h = store.history;
+  if(!h.length){ list.innerHTML = '<p class="status">Aucune réunion enregistrée.</p>'; return; }
+  list.innerHTML="";
+  h.forEach(sess=>{
+    const row = document.createElement("div"); row.className="hist";
+    const left = document.createElement("div");
+    left.innerHTML = `<div class="t"></div><div class="d"></div>`;
+    left.querySelector(".t").textContent = sess.title;
+    left.querySelector(".d").textContent = new Date(sess.date).toLocaleString("fr-FR") + (sess.duration?` · ${sess.duration} min`:"");
+    left.onclick = ()=>renderResult(sess);
+    left.style.flex="1";
+    const del = document.createElement("button"); del.className="del"; del.textContent="🗑";
+    del.onclick = e=>{ e.stopPropagation();
+      if(confirm("Supprimer cette réunion ?")){ store.history = store.history.filter(x=>x.id!==sess.id); renderHistory(); } };
+    row.appendChild(left); row.appendChild(del); list.appendChild(row);
+  });
+}
+
+/* ---------- utils ---------- */
+function sanitize(s){ return s.replace(/[^\w\dàâäéèêëîïôöùûüç \-]/gi,"").trim().replace(/ +/g,"_")||"reunion"; }
+function triggerDownload(blob, name){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000);
+}
+window.addEventListener("beforeunload", e=>{
+  if(mediaRecorder && mediaRecorder.state!=="inactive"){ e.preventDefault(); e.returnValue=""; }
+});
+
+/* ---------- init ---------- */
+loadSettings(); renderHistory();
+if("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(()=>{});
+</script>
+</body>
+</html>
