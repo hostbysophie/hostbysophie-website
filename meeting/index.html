@@ -170,6 +170,11 @@
       <option value="fr">Français</option>
       <option value="en">English</option>
     </select>
+    <label>Longueur du résumé</label>
+    <select id="sumLen">
+      <option value="long">Détaillé — tous les sujets, qui a dit quoi</option>
+      <option value="court">Court — l'essentiel en quelques lignes</option>
+    </select>
     <label>Langue parlée en réunion</label>
     <select id="spokenLang">
       <option value="fr">Français</option>
@@ -196,6 +201,8 @@ const store = {
   set key(v){ localStorage.setItem("hbs_key", v); },
   get sumLang(){ return localStorage.getItem("hbs_sumlang")||"fr"; },
   set sumLang(v){ localStorage.setItem("hbs_sumlang", v); },
+  get sumLen(){ return localStorage.getItem("hbs_sumlen")||"long"; },
+  set sumLen(v){ localStorage.setItem("hbs_sumlen", v); },
   get spokenLang(){ return localStorage.getItem("hbs_spokenlang")||"fr"; },
   set spokenLang(v){ localStorage.setItem("hbs_spokenlang", v); },
   get history(){ try{return JSON.parse(localStorage.getItem("hbs_hist")||"[]");}catch(e){return[];} },
@@ -231,12 +238,14 @@ function setTab(t){
 function loadSettings(){
   $("apiKey").value = store.key;
   $("sumLang").value = store.sumLang;
+  $("sumLen").value = store.sumLen;
   $("spokenLang").value = store.spokenLang;
   $("noKeyBanner").style.display = store.key ? "none" : "";
 }
 function saveSettings(){
   store.key = $("apiKey").value.trim();
   store.sumLang = $("sumLang").value;
+  store.sumLen = $("sumLen").value;
   store.spokenLang = $("spokenLang").value;
   loadSettings();
   show("home");
@@ -430,16 +439,26 @@ async function processRecording(){
 async function lemurSummary(sess){
   const lang = store.sumLang==="en" ? "in English" : "en français";
   const transcript = sess.utterances.map(u=>(sess.speakers[u.speaker]||u.speaker)+": "+u.text).join("\n");
-  const prompt = `You are the assistant of Host By Sophie, a vacation rental agency in Aruba. `+
-    `Summarize this meeting transcript ${lang}. Structure exactly:\n`+
-    `PARTICIPANTS:\nKEY POINTS: (bullets)\nDECISIONS: (bullets)\nACTION ITEMS: (bullets, with owner if identifiable)\n`+
-    `Be concise and professional. Use the speaker names from the transcript.\n\nTranscript:\n`+transcript;
+  const detailed = store.sumLen !== "court";
+  const prompt = detailed
+    ? `You are the assistant of Host By Sophie, a vacation rental agency in Aruba. `+
+      `Write a DETAILED and thorough summary of this meeting transcript ${lang}. Cover every topic that was discussed — do not skip minor subjects. Structure exactly:\n`+
+      `PARTICIPANTS: (who they are and their role if identifiable)\n`+
+      `SUBJECTS DISCUSSED: (one section per topic, with the substance of what was said, who said what, figures, dates and names mentioned)\n`+
+      `DECISIONS: (bullets)\n`+
+      `ACTION ITEMS: (bullets, with owner and deadline if identifiable)\n`+
+      `OPEN QUESTIONS: (anything left unresolved)\n`+
+      `Be professional and complete. Use the speaker names from the transcript.\n\nTranscript:\n`+transcript
+    : `You are the assistant of Host By Sophie, a vacation rental agency in Aruba. `+
+      `Summarize this meeting transcript ${lang} in a SHORT and punchy way. Structure exactly:\n`+
+      `PARTICIPANTS:\nKEY POINTS: (max 5 bullets)\nDECISIONS: (bullets)\nACTION ITEMS: (bullets)\n`+
+      `Be brief — the essentials only. Use the speaker names from the transcript.\n\nTranscript:\n`+transcript;
   let lastErr = "résumé indisponible";
   for(const model of LLM_MODELS){
     try{
       const r = await fetch(LLM_URL, {method:"POST",
         headers:{authorization:store.key,"content-type":"application/json"},
-        body: JSON.stringify({model, messages:[{role:"user", content:prompt}], max_tokens:2000})});
+        body: JSON.stringify({model, messages:[{role:"user", content:prompt}], max_tokens: detailed?6000:1500})});
       const j = await r.json();
       if(r.ok && j.choices && j.choices[0] && j.choices[0].message) return j.choices[0].message.content.trim();
       lastErr = j.error||("HTTP "+r.status);
