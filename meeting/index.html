@@ -83,6 +83,9 @@
   <div class="card" style="text-align:center">
     <button class="btn-primary recbtn btn" onclick="startRecording()">🎙️<br>Enregistrer<br>une réunion</button>
     <p class="status">Conseil : présentez-vous à tour de rôle en début de réunion pour faciliter l'identification des voix.</p>
+    <button class="btn btn-outline" onclick="$('importFile').click()">📁 Importer un enregistrement</button>
+    <input type="file" id="importFile" accept="audio/*,video/*" style="display:none" onchange="importAudio(this)">
+    <p class="status">Pour les longues réunions : enregistrez avec le Dictaphone du téléphone (fiable même écran éteint), puis importez le fichier ici.</p>
   </div>
   <div class="card">
     <h2>Historique</h2>
@@ -209,6 +212,7 @@ const store = {
 
 let mediaRecorder=null, chunks=[], startTime=0, pausedMs=0, pauseStart=0, timerInt=null, wakeLock=null;
 let currentBlob=null, currentSession=null;
+let audioCtx=null, silenceInt=null, lastSound=0;
 
 /* ---------- navigation ---------- */
 function show(id){
@@ -241,6 +245,7 @@ function saveSettings(){
 /* ---------- recording ---------- */
 async function startRecording(){
   if(!store.key){ show("settings"); return; }
+  if(!confirm("🔕 AVANT DE COMMENCER :\n\n1. Activez le mode « Ne pas déranger »\n   (balayez du haut de l'écran → icône 🔕)\n\n2. Gardez l'app affichée à l'écran\n   pendant TOUTE la réunion\n\nPrêt ? Appuyez sur OK pour enregistrer.")) return;
   try{
     const stream = await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false, noiseSuppression:true}});
     const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus"
@@ -266,6 +271,34 @@ async function startRecording(){
       try{ navigator.vibrate(100); }catch(e){}
     };
     try{ wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+    // Session audio active = Chrome ne met pas l'app en veille + détecteur de silence
+    try{
+      audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(stream);
+      const analyser = audioCtx.createAnalyser(); analyser.fftSize = 512;
+      const muteGain = audioCtx.createGain(); muteGain.gain.value = 0;
+      src.connect(analyser); analyser.connect(muteGain); muteGain.connect(audioCtx.destination);
+      lastSound = Date.now();
+      const buf = new Uint8Array(analyser.fftSize);
+      silenceInt = setInterval(()=>{
+        if(!mediaRecorder || mediaRecorder.state!=="recording") return;
+        analyser.getByteTimeDomainData(buf);
+        let peak = 0;
+        for(let i=0;i<buf.length;i++){ const d = Math.abs(buf[i]-128); if(d>peak) peak = d; }
+        if(peak > 2){
+          if(Date.now()-lastSound > 30000){ // le son revient après une alerte
+            $("recStatus").textContent = "Enregistrement en cours…";
+            $("recStatus").style.color = ""; $("recStatus").style.fontWeight = "";
+          }
+          lastSound = Date.now();
+        }else if(Date.now()-lastSound > 30000){
+          $("recStatus").textContent = "⚠ AUCUN SON DEPUIS 30 s — vérifiez le micro !";
+          $("recStatus").style.color = "var(--red)";
+          $("recStatus").style.fontWeight = "bold";
+          try{ navigator.vibrate([400,150,400]); }catch(e){}
+        }
+      }, 5000);
+    }catch(e){}
     $("pauseBtn").textContent="⏸ Pause";
     $("recStatus").textContent="Enregistrement en cours…";
     show("record");
@@ -298,6 +331,8 @@ function stopRecording(){
   if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
 }
 function onRecordingStopped(){
+  clearInterval(silenceInt); silenceInt=null;
+  if(audioCtx){ try{ audioCtx.close(); }catch(e){} audioCtx=null; }
   mediaRecorder.stream.getTracks().forEach(t=>t.stop());
   currentBlob = new Blob(chunks, {type: mediaRecorder.mimeType||"audio/webm"});
   const dur = $("timer").textContent;
@@ -308,6 +343,17 @@ function onRecordingStopped(){
 }
 function discardRecording(){
   if(confirm("Abandonner cet enregistrement ?")){ currentBlob=null; show("home"); }
+}
+function importAudio(input){
+  if(!store.key){ show("settings"); return; }
+  const f = input.files && input.files[0];
+  if(!f) return;
+  currentBlob = f;
+  const mb = (f.size/1048576).toFixed(1);
+  $("reviewInfo").textContent = `Fichier : ${f.name} · ${mb} Mo`;
+  $("meetingTitle").value = f.name.replace(/\.[^.]+$/,"") || ("Réunion du " + new Date().toLocaleDateString("fr-FR"));
+  input.value = "";
+  show("review");
 }
 function downloadAudio(){
   if(!currentBlob) return;
