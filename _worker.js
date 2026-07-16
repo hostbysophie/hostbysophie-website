@@ -19,6 +19,31 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // ── Proxy for HBS Meeting app: relay summary requests to AssemblyAI ──────
+    // (their LLM Gateway blocks direct browser calls; same-origin proxy fixes it)
+    if (url.pathname === '/meeting-summary') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: corsHeaders() });
+      }
+      if (request.method !== 'POST') {
+        return new Response('Method not allowed', { status: 405 });
+      }
+      try {
+        const auth = request.headers.get('authorization') || '';
+        const upstream = await fetch('https://llm-gateway.assemblyai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'authorization': auth, 'content-type': 'application/json' },
+          body: await request.text(),
+        });
+        return new Response(await upstream.text(), {
+          status: upstream.status,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+      } catch (err) {
+        return jsonError('Summary proxy error', 502);
+      }
+    }
+
     // ── Handle Stripe Checkout session creation ───────────────────────────────
     if (url.pathname === '/create-checkout') {
 
