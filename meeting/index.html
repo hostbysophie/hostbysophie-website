@@ -100,7 +100,7 @@
       <button class="btn btn-danger" onclick="stopRecording()">⏹ Terminer</button>
     </div>
   </div>
-  <div class="banner">🔒 L'écran reste allumé pendant l'enregistrement. Ne fermez pas l'application.</div>
+  <div class="banner">🔒 <strong>Important :</strong> gardez l'app ouverte à l'écran pendant TOUTE la réunion. Ne verrouillez pas l'écran, ne changez pas d'application — Android couperait le micro. L'écran reste allumé automatiquement.</div>
 </section>
 
 <!-- ================= REVIEW (after stop) ================= -->
@@ -185,7 +185,8 @@
 <script>
 "use strict";
 const API = "https://api.assemblyai.com";
-const LEMUR_MODELS = ["anthropic/claude-sonnet-4-20250514","anthropic/claude-3-5-haiku-20241022","default"];
+const LLM_URL = "https://llm-gateway.assemblyai.com/v1/chat/completions";
+const LLM_MODELS = ["claude-sonnet-4-6","claude-haiku-4-5","gpt-4.1-mini"];
 const $ = id => document.getElementById(id);
 const store = {
   get key(){ return localStorage.getItem("hbs_key")||""; },
@@ -251,6 +252,19 @@ async function startRecording(){
     mediaRecorder.start(1000);
     startTime = Date.now();
     timerInt = setInterval(updateTimer, 500);
+    // Alerte si Android coupe le micro (écran verrouillé / app en arrière-plan)
+    const track = stream.getAudioTracks()[0];
+    track.onmute = ()=>{
+      $("recStatus").textContent = "⚠ MICRO COUPÉ — revenez sur l'app immédiatement !";
+      $("recStatus").style.color = "var(--red)";
+      $("recStatus").style.fontWeight = "bold";
+      try{ navigator.vibrate([400,150,400,150,400]); }catch(e){}
+    };
+    track.onunmute = ()=>{
+      $("recStatus").textContent = "Enregistrement en cours…";
+      $("recStatus").style.color = ""; $("recStatus").style.fontWeight = "";
+      try{ navigator.vibrate(100); }catch(e){}
+    };
     try{ wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
     $("pauseBtn").textContent="⏸ Pause";
     $("recStatus").textContent="Enregistrement en cours…";
@@ -368,21 +382,25 @@ async function processRecording(){
   }
 }
 async function lemurSummary(sess){
-  const names = Object.entries(sess.speakers).map(([k,v])=>`Speaker ${k} = ${v}`).join(", ");
   const lang = store.sumLang==="en" ? "in English" : "en français";
+  const transcript = sess.utterances.map(u=>(sess.speakers[u.speaker]||u.speaker)+": "+u.text).join("\n");
   const prompt = `You are the assistant of Host By Sophie, a vacation rental agency in Aruba. `+
-    `Summarize this meeting transcript ${lang}. Speaker mapping: ${names}. Structure exactly:\n`+
+    `Summarize this meeting transcript ${lang}. Structure exactly:\n`+
     `PARTICIPANTS:\nKEY POINTS: (bullets)\nDECISIONS: (bullets)\nACTION ITEMS: (bullets, with owner if identifiable)\n`+
-    `Be concise and professional. Use the mapped speaker names.`;
+    `Be concise and professional. Use the speaker names from the transcript.\n\nTranscript:\n`+transcript;
   let lastErr = "résumé indisponible";
-  for(const model of LEMUR_MODELS){
+  for(const model of LLM_MODELS){
     try{
-      const r = await fetch(API+"/lemur/v3/generate/task", {method:"POST",
+      const r = await fetch(LLM_URL, {method:"POST",
         headers:{authorization:store.key,"content-type":"application/json"},
-        body: JSON.stringify({transcript_ids:[sess.transcriptId], prompt, final_model:model, max_output_size:3000})});
+        body: JSON.stringify({model, messages:[{role:"user", content:prompt}], max_tokens:2000})});
       const j = await r.json();
-      if(r.ok && j.response) return j.response.trim();
+      if(r.ok && j.choices && j.choices[0] && j.choices[0].message) return j.choices[0].message.content.trim();
       lastErr = j.error||("HTTP "+r.status);
+      if(typeof lastErr==="object") lastErr = JSON.stringify(lastErr);
+      if(String(lastErr).includes("does not have access")){
+        return "⚠ Résumé indisponible : active la facturation sur assemblyai.com (Billing → ajouter une carte), puis touche « Régénérer le résumé ». La transcription est dans l'onglet Transcription.";
+      }
     }catch(e){ lastErr = e.message; }
   }
   return "⚠ Résumé indisponible ("+lastErr+"). La transcription reste accessible dans l'onglet Transcription.";
@@ -473,6 +491,12 @@ function triggerDownload(blob, name){
 }
 window.addEventListener("beforeunload", e=>{
   if(mediaRecorder && mediaRecorder.state!=="inactive"){ e.preventDefault(); e.returnValue=""; }
+});
+// Ré-active le maintien d'écran quand on revient sur l'app en cours d'enregistrement
+document.addEventListener("visibilitychange", async ()=>{
+  if(document.visibilityState==="visible" && mediaRecorder && mediaRecorder.state==="recording"){
+    try{ wakeLock = await navigator.wakeLock.request("screen"); }catch(e){}
+  }
 });
 
 /* ---------- init ---------- */
