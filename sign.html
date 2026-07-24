@@ -248,7 +248,7 @@
         Each signatory sends back a <strong>.json</strong> pack.<br>Upload all packs — the original PDF is included automatically. No need to re-upload it.
       </div>
       <button class="sm-btn" style="width:100%;margin-bottom:6px" onclick="document.getElementById('packInput').click()">📥 Upload .json packs</button>
-      <input type="file" id="packInput" accept=".json" multiple style="display:none"/>
+      <input type="file" id="packInput" accept=".json,.txt" multiple style="display:none"/>
       <button class="sm-btn" style="width:100%;margin-bottom:8px;font-size:.75rem" onclick="togglePasteBox()">📋 Paste pack from email</button>
       <div id="pasteBox" style="display:none;margin-bottom:8px">
         <textarea id="pasteInp" class="hbs-inp" rows="4" placeholder='Paste the JSON pack content here…' style="font-size:.72rem;font-family:monospace;resize:vertical"></textarea>

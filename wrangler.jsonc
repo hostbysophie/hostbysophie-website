@@ -5,5 +5,11 @@
   "main": "_worker.js",
   "assets": {
     "directory": "."
+  },
+  "observability": {
+    "logs": {
+      "enabled": true,
+      "invocation_logs": true
+    }
   }
 }

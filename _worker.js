@@ -149,7 +149,7 @@ export default {
           '<p><strong>Email:</strong> ' + escapeHtml(sigEmail || '—') + '</p>' +
           '<p><strong>Zones signed:</strong> ' + signedCount + ' / ' + totalCount + '</p>' +
           '<p><strong>Received:</strong> ' + receivedAt + '</p>' +
-          '<p>The signed pack is attached as a <code>.json</code> file. Open the Sign tool on ' +
+          '<p>The signed pack is attached as a <code>.txt</code> file. Open the Sign tool on ' +
           'hostbysophie.com, upload the original PDF, then upload this pack to generate the final signed PDF.</p>';
 
         const payload = {
@@ -157,7 +157,7 @@ export default {
           to:      [{ email: 'hostbysophie@gmail.com', name: 'Host By Sophie' }],
           subject: '[Sign] ' + sigName + ' signed (' + signedCount + '/' + totalCount + ')',
           htmlContent: htmlBody,
-          attachment: [{ content: packB64, name: 'sigpack-' + fileSafe + '.json' }],
+          attachment: [{ content: packB64, name: 'sigpack-' + fileSafe + '.txt' }],
         };
         if (sigEmail.includes('@')) payload.replyTo = { email: sigEmail, name: sigName };
 
