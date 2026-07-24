@@ -114,10 +114,96 @@ export default {
       }
     }
 
+    // ── Sign app: receive a signed pack and email it to Host By Sophie ────────
+    // The signing pages (hosted externally) POST the signed pack here.
+    // We forward it as a .json attachment via Brevo, sent from the verified
+    // hostbysophie@gmail.com sender and delivered to that same inbox.
+    //   Environment variable required (Cloudflare → Settings → Variables):
+    //     BREVO_API_KEY  →  xkeysib-xxxxxxxx
+    if (url.pathname === '/sign-pack') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: corsHeaders() });
+      }
+      if (request.method !== 'POST') {
+        return new Response('Method not allowed', { status: 405 });
+      }
+      try {
+        const pack = await request.json();
+        if (!pack || !pack.signatory || !Array.isArray(pack.signatures)) {
+          return jsonError('Invalid pack', 400);
+        }
+
+        const sigName  = String(pack.signatory.name  || 'Unknown');
+        const sigEmail = String(pack.signatory.email || '');
+        const signedCount = pack.signatures.filter(s => s && s.imageDataUrl).length;
+        const totalCount  = pack.signatures.length;
+        const receivedAt  = new Date().toISOString();
+
+        const packJson = JSON.stringify(pack, null, 2);
+        const packB64  = toBase64(packJson);
+        const fileSafe = sigName.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase();
+
+        const htmlBody =
+          '<h2>New signed pack received</h2>' +
+          '<p><strong>Signatory:</strong> ' + escapeHtml(sigName) + '</p>' +
+          '<p><strong>Email:</strong> ' + escapeHtml(sigEmail || '—') + '</p>' +
+          '<p><strong>Zones signed:</strong> ' + signedCount + ' / ' + totalCount + '</p>' +
+          '<p><strong>Received:</strong> ' + receivedAt + '</p>' +
+          '<p>The signed pack is attached as a <code>.json</code> file. Open the Sign tool on ' +
+          'hostbysophie.com, upload the original PDF, then upload this pack to generate the final signed PDF.</p>';
+
+        const payload = {
+          sender:  { name: 'Host By Sophie — Sign', email: 'hostbysophie@gmail.com' },
+          to:      [{ email: 'hostbysophie@gmail.com', name: 'Host By Sophie' }],
+          subject: '[Sign] ' + sigName + ' signed (' + signedCount + '/' + totalCount + ')',
+          htmlContent: htmlBody,
+          attachment: [{ content: packB64, name: 'sigpack-' + fileSafe + '.json' }],
+        };
+        if (sigEmail.includes('@')) payload.replyTo = { email: sigEmail, name: sigName };
+
+        const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'api-key':      env.BREVO_API_KEY,
+            'Content-Type': 'application/json',
+            'accept':       'application/json',
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!brevoRes.ok) {
+          console.error('Brevo error:', await brevoRes.text());
+          return jsonError('Email service error', 502);
+        }
+
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+
+      } catch (err) {
+        console.error('sign-pack exception:', err);
+        return jsonError('Server error', 500);
+      }
+    }
+
     // ── All other requests → serve static assets ──────────────────────────────
     return env.ASSETS.fetch(request);
   }
 };
+
+// UTF-8 safe base64 for the JSON attachment
+function toBase64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[<>&"']/g, c =>
+    ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;', "'": '&#39;' }[c]));
+}
 
 function corsHeaders() {
   return {

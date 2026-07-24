@@ -690,7 +690,6 @@ function buildSigningHTML(sig, sigZones, pdfB64) {
 ${SO('src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"')}${SC}
 ${SO('src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"')}${SC}
 ${SO('src="https://cdnjs.cloudflare.com/ajax/libs/signature_pad/4.1.7/signature_pad.umd.min.js"')}${SC}
-${SO('src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"')}${SC}
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -846,8 +845,6 @@ body{font-family:var(--sans);background:var(--sand);color:var(--ink);min-height:
 ${SO()}
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-emailjs.init('kBAIvxnxU2UFuXIN2');
 
 var SIGNATORY = ${j(sig)};
 var ZONES     = ${j(sigZones)};
@@ -1128,14 +1125,15 @@ function downloadPack(){
     })
   };
 
-  // Also download locally as backup
+  // Always download locally as a backup first
+  var fname='sigpack-'+SIGNATORY.name.replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase()+'.json';
   var blob=new Blob([JSON.stringify(pack,null,2)],{type:'application/json'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='sigpack-'+SIGNATORY.name.replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase()+'.json';
+  a.download=fname;
   a.click();
 
-  // Send automatically via EmailJS (pack without pdfB64 to stay within size limits)
+  // Send to Host By Sophie via the site server (Brevo). Pack without pdfB64 to keep it light.
   var emailPack={
     version:pack.version, signatory:pack.signatory,
     auditInfo:pack.auditInfo,
@@ -1143,21 +1141,47 @@ function downloadPack(){
   };
   var btn=document.getElementById('packBtn');
   btn.textContent='⏳ Sending…'; btn.disabled=true;
-  emailjs.send('service_ylsb89q','template_lg0cv2j',{
-    signatory_name: SIGNATORY.name,
-    signatory_email: SIGNATORY.email||'—',
-    signed_at: new Date().toLocaleString('en-GB'),
-    pack_data: JSON.stringify(emailPack,null,2)
+  fetch('https://hostbysophie.com/sign-pack',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(emailPack)
+  }).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
   }).then(function(){
     btn.textContent='✅ Sent to Host By Sophie';
     btn.style.borderColor='#2F8F54'; btn.style.color='#2F8F54';
     showToast('✓ Your signatures were sent automatically!');
   }).catch(function(err){
-    console.error('EmailJS error:',err);
+    console.error('sign-pack error:',err);
     btn.textContent='📦 Send to creator';
     btn.disabled=false;
-    showToast('⚠ Auto-send failed — please email the downloaded .json file to hostbysophie@gmail.com');
+    showManualFallback(fname);
   });
+}
+
+// Bulletproof fallback: if the server is unreachable, the signer can always
+// email the pack manually. The .json file is already on their device.
+function showManualFallback(fname){
+  var subj=encodeURIComponent('Signed document — '+SIGNATORY.name);
+  var body=encodeURIComponent(
+    'Hello Host By Sophie,\\n\\n'+
+    'Automatic sending did not work, so I am returning my signed pack manually.\\n'+
+    'Please find attached the file: '+fname+' (it was just downloaded to my device).\\n\\n'+
+    'Thank you,\\n'+SIGNATORY.name);
+  var mailto='mailto:hostbysophie@gmail.com?subject='+subj+'&body='+body;
+  var ov=document.createElement('div');
+  ov.className='modal-ov open';
+  ov.innerHTML='<div class="modal"><div class="modal-hdr"><div class="modal-title">Return your signatures</div>'+
+    '<button class="close-btn" onclick="this.closest(&quot;.modal-ov&quot;).remove()">✕</button></div>'+
+    '<div style="font-size:.9rem;line-height:1.65;color:var(--ink)">Automatic sending is unavailable right now. '+
+    'Your signed file <strong>'+fname+'</strong> has been downloaded to your device.<br><br>'+
+    'Tap the button below to email it to Host By Sophie — then simply <strong>attach the downloaded file</strong> before sending.</div>'+
+    '<div class="modal-foot"><span></span>'+
+    '<a class="mbtn ocean" href="'+mailto+'" style="text-decoration:none">✉ Email my signatures</a></div>'+
+    '</div>';
+  document.body.appendChild(ov);
+  ov.addEventListener('click',function(e){ if(e.target===ov) ov.remove(); });
 }
 
 var _tt;
