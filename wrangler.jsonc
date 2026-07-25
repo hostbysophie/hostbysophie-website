@@ -4,12 +4,16 @@
   "compatibility_date": "2025-01-01",
   "main": "_worker.js",
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "binding": "ASSETS"
   },
   "observability": {
     "logs": {
       "enabled": true,
       "invocation_logs": true
     }
-  }
+  },
+  "kv_namespaces": [
+    { "binding": "SIGN_PACKS", "id": "e4a68697d8144dd28c22bb0377e12014" }
+  ]
 }

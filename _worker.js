@@ -161,25 +161,43 @@ export default {
         };
         if (sigEmail.includes('@')) payload.replyTo = { email: sigEmail, name: sigName };
 
-        const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
-          method: 'POST',
-          headers: {
-            'api-key':      env.BREVO_API_KEY,
-            'Content-Type': 'application/json',
-            'accept':       'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
+        let stored = false, emailed = false;
 
-        if (!brevoRes.ok) {
-          console.error('Brevo error:', await brevoRes.text());
-          return jsonError('Email service error', 502);
+        // 1) Save the pack server-side (KV) — survives even if email fails
+        if (env.SIGN_PACKS) {
+          try {
+            const key = 'pack:' + Date.now() + ':' + fileSafe;
+            await env.SIGN_PACKS.put(key, packJson, {
+              metadata: { name: sigName, email: sigEmail, signed: signedCount, total: totalCount, at: receivedAt },
+              expirationTtl: 60 * 60 * 24 * 365, // keep 1 year
+            });
+            stored = true;
+          } catch (e) { console.error('KV store error:', e); }
         }
 
-        return new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders() },
-        });
+        // 2) Email it via Brevo
+        try {
+          const brevoRes = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'api-key':      env.BREVO_API_KEY,
+              'Content-Type': 'application/json',
+              'accept':       'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+          if (brevoRes.ok) emailed = true;
+          else console.error('Brevo error:', await brevoRes.text());
+        } catch (e) { console.error('Brevo exception:', e); }
+
+        // Success if the pack is safe by at least one channel
+        if (stored || emailed) {
+          return new Response(JSON.stringify({ ok: true, stored, emailed }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+          });
+        }
+        return jsonError('Could not deliver or store the pack', 502);
 
       } catch (err) {
         console.error('sign-pack exception:', err);
@@ -187,8 +205,49 @@ export default {
       }
     }
 
+    // ── Sign inbox (token-protected): list / download / delete stored packs ───
+    if (url.pathname === '/sign-packs' || url.pathname === '/sign-pack-file' || url.pathname === '/sign-pack-delete') {
+      if (!env.INBOX_TOKEN || url.searchParams.get('token') !== env.INBOX_TOKEN) {
+        return jsonError('Unauthorized', 401);
+      }
+      if (!env.SIGN_PACKS) return jsonError('Storage not configured', 500);
+
+      if (url.pathname === '/sign-packs') {
+        const list = await env.SIGN_PACKS.list({ prefix: 'pack:' });
+        const items = list.keys
+          .map(k => ({ key: k.name, ...(k.metadata || {}) }))
+          .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+        return new Response(JSON.stringify({ items }), {
+          status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        });
+      }
+
+      const key = url.searchParams.get('key');
+      if (!key) return jsonError('Missing key', 400);
+
+      if (url.pathname === '/sign-pack-file') {
+        const val = await env.SIGN_PACKS.get(key);
+        if (val === null) return jsonError('Not found', 404);
+        return new Response(val, {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Content-Disposition': 'attachment; filename="' + key.replace(/[^a-zA-Z0-9._-]+/g, '_') + '.txt"',
+            ...corsHeaders(),
+          },
+        });
+      }
+
+      // /sign-pack-delete
+      if (request.method !== 'POST') return new Response('Method not allowed', { status: 405 });
+      await env.SIGN_PACKS.delete(key);
+      return new Response(JSON.stringify({ ok: true }), {
+        status: 200, headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+      });
+    }
+
     // ── All other requests → serve static assets ──────────────────────────────
-    return env.ASSETS.fetch(request);
+    return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', { status: 404 });
   }
 };
 
