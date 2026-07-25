@@ -219,6 +219,7 @@
     <div class="sb-section">
       <div class="sb-label">Document</div>
       <button class="sm-btn ocean" style="width:100%" onclick="document.getElementById('fileInput').click()">📄 Upload PDF contract</button>
+      <button class="sb-btn" id="myDocsBtn" style="display:none;margin-top:6px" onclick="openDocList()">📁 Resume a document (<span id="docCount">0</span>)</button>
       <div id="docName" style="font-size:.75rem;color:var(--ink-soft);margin-top:8px;text-align:center;word-break:break-all"></div>
     </div>
 
@@ -324,6 +325,21 @@
   </div>
 </div>
 
+<!-- ── DOCUMENTS IN PROGRESS DIALOG ── -->
+<div class="overlay" id="docsDlg">
+  <div class="dialog dialog-wide">
+    <div class="dialog-title">Documents in progress</div>
+    <div style="font-size:.8rem;color:var(--ink-soft);line-height:1.5">
+      Saved on this device (this browser) for <strong>7 days</strong>, then removed automatically. Reopen one to keep working, or delete it.
+    </div>
+    <div id="docListBody" style="display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto"></div>
+    <div class="dialog-footer">
+      <button class="sm-btn" onclick="closeDocList()">Close</button>
+      <button class="sm-btn ocean" onclick="closeDocList();document.getElementById('fileInput').click()">+ New document</button>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="fileInput" accept=".pdf" style="display:none"/>
 <div class="toast" id="toast"></div>
 
@@ -345,7 +361,12 @@ let signatories = [
 ];
 
 /* render on load */
-document.addEventListener('DOMContentLoaded', () => { renderSigList(); });
+document.addEventListener('DOMContentLoaded', () => {
+  renderSigList();
+  const saved = dmPurgeExpired();
+  updateDocCount();
+  if (saved.length) openDocList(); // offer to resume a document
+});
 
 /* ── File loading ── */
 document.getElementById('fileInput').addEventListener('change', e => {
@@ -365,6 +386,8 @@ pdfArea.addEventListener('drop', e => {
 async function loadPDF(file) {
   load(10);
   rawPdfBytes = await file.arrayBuffer();
+  currentDocId = dmNewId();
+  currentDocName = file.name || 'Document';
   load(30);
   pdfDoc = await pdfjsLib.getDocument({ data: rawPdfBytes.slice() }).promise;
   load(50);
@@ -391,6 +414,7 @@ async function loadPDF(file) {
     load(50 + i * step);
   }
   load(100); setTimeout(unload, 400);
+  saveCurrentDoc();
 }
 
 async function renderPage(pageNum) {
@@ -490,6 +514,7 @@ function addSignatory() {
   document.getElementById('inpEmail').value = '';
   document.getElementById('addSigForm').style.display = 'none';
   updateExportBtn();
+  saveCurrentDoc();
   showToast('✓ ' + sig.name + ' added');
 }
 
@@ -500,6 +525,7 @@ function removeSig(id) {
   zones = zones.filter(z => z.sigId !== id);
   signatories = signatories.filter(s => s.id !== id);
   renderSigList(); updateZoneList(); updateExportBtn();
+  saveCurrentDoc();
 }
 
 function renderSigList() {
@@ -539,6 +565,7 @@ function confirmZone() {
   updateZoneList(); updateExportBtn();
   document.getElementById('assignDlg').classList.remove('open');
   pendingZone = null;
+  saveCurrentDoc();
   showToast(type === 'sig' ? '✍ Signature zone placed' : '✒ Initials zone placed');
 }
 
@@ -561,6 +588,7 @@ function deleteZone(id) {
   document.getElementById('zr-'+id)?.remove();
   zones = zones.filter(z => z.id !== id);
   updateZoneList(); updateExportBtn();
+  saveCurrentDoc();
 }
 
 function updateZoneList() {
@@ -1398,6 +1426,151 @@ function load(p){const b=document.getElementById('loadBar');b.style.display='blo
 function unload(){const b=document.getElementById('loadBar');b.style.width='0';setTimeout(()=>b.style.display='none',300);}
 let _tt;
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),2800);}
+
+/* ══════════════════════════════════════════════════════
+   DOCUMENT MEMORY — saved in this browser for 7 days
+══════════════════════════════════════════════════════ */
+const DM_INDEX = 'hbs_sign_index';
+const DM_DOC   = 'hbs_sign_doc_';
+const DM_TTL   = 7 * 24 * 3600 * 1000; // 7 days
+let currentDocId = null, currentDocName = '';
+
+function dmNewId(){ return 'd' + Date.now() + Math.random().toString(36).slice(2,6); }
+function dmLoadIndex(){ try { return JSON.parse(localStorage.getItem(DM_INDEX) || '[]'); } catch(e){ return []; } }
+function dmSaveIndex(arr){ try { localStorage.setItem(DM_INDEX, JSON.stringify(arr)); } catch(e){} }
+
+function dmBytesToB64(buf){
+  const bytes = new Uint8Array(buf); let bin = ''; const chunk = 0x8000;
+  for (let i = 0; i < bytes.length; i += chunk) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  return btoa(bin);
+}
+function dmB64ToBytes(b64){
+  const bin = atob(b64), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function dmSetItem(key, val){
+  try { localStorage.setItem(key, val); return true; }
+  catch(e){
+    const idx = dmLoadIndex();
+    if (idx.length){
+      idx.sort((a,b) => a.updatedAt - b.updatedAt);
+      const oldest = idx.shift();
+      localStorage.removeItem(DM_DOC + oldest.id);
+      dmSaveIndex(idx);
+      try { localStorage.setItem(key, val); showToast('Storage full — oldest document removed'); return true; }
+      catch(e2){ showToast('⚠ Could not save (storage full)'); return false; }
+    }
+    showToast('⚠ Could not save (storage full)');
+    return false;
+  }
+}
+
+function saveCurrentDoc(){
+  if (!rawPdfBytes || !currentDocId) return;
+  const now = Date.now();
+  const doc = {
+    id: currentDocId, name: currentDocName || 'Document',
+    createdAt: now, updatedAt: now,
+    pdfB64: dmBytesToB64(rawPdfBytes),
+    signatories, zones, nextId, colorIdx
+  };
+  const idx = dmLoadIndex();
+  const existing = idx.find(e => e.id === currentDocId);
+  if (existing){ doc.createdAt = existing.createdAt; existing.name = doc.name; existing.updatedAt = now; }
+  else idx.push({ id: currentDocId, name: doc.name, updatedAt: now });
+  if (dmSetItem(DM_DOC + currentDocId, JSON.stringify(doc))) dmSaveIndex(idx);
+  updateDocCount();
+}
+
+function dmPurgeExpired(){
+  const now = Date.now();
+  let idx = dmLoadIndex();
+  const kept = [];
+  for (const e of idx){
+    if (now - (e.updatedAt || 0) > DM_TTL) localStorage.removeItem(DM_DOC + e.id);
+    else kept.push(e);
+  }
+  if (kept.length !== idx.length) dmSaveIndex(kept);
+  return kept;
+}
+
+function updateDocCount(){
+  const idx = dmLoadIndex();
+  const btn = document.getElementById('myDocsBtn');
+  const c = document.getElementById('docCount');
+  if (c) c.textContent = idx.length;
+  if (btn) btn.style.display = idx.length ? 'flex' : 'none';
+}
+
+function openDocList(){ renderDocList(); document.getElementById('docsDlg').classList.add('open'); }
+function closeDocList(){ document.getElementById('docsDlg').classList.remove('open'); }
+
+function dmFmtDate(ts){
+  const d = new Date(ts);
+  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const pad = n => ('0'+n).slice(-2);
+  return d.getDate()+' '+mo[d.getMonth()]+' '+d.getFullYear()+' · '+pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+function renderDocList(){
+  const body = document.getElementById('docListBody');
+  const idx = dmLoadIndex().sort((a,b) => b.updatedAt - a.updatedAt);
+  if (!idx.length){ body.innerHTML = '<div style="color:var(--ink-soft);font-size:.85rem">No saved documents.</div>'; return; }
+  body.innerHTML = idx.map(e => {
+    const days = Math.max(0, 7 - Math.floor((Date.now() - e.updatedAt) / (24*3600*1000)));
+    return '<div class="pack-row" style="align-items:center">'+
+      '<div style="flex:1;min-width:0">'+
+        '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+esc(e.name)+'</div>'+
+        '<div style="color:var(--ink-soft);font-size:.72rem">'+dmFmtDate(e.updatedAt)+' · expires in '+days+' day'+(days===1?'':'s')+'</div>'+
+      '</div>'+
+      '<button class="sm-btn ocean" style="flex:0 0 auto;padding:5px 12px" onclick="openSavedDoc(\''+e.id+'\')">Open</button>'+
+      '<button class="icon-btn" title="Delete" onclick="deleteSavedDoc(\''+e.id+'\')">🗑</button>'+
+    '</div>';
+  }).join('');
+}
+
+function deleteSavedDoc(id){
+  localStorage.removeItem(DM_DOC + id);
+  dmSaveIndex(dmLoadIndex().filter(e => e.id !== id));
+  renderDocList(); updateDocCount();
+  showToast('Document deleted');
+}
+
+async function openSavedDoc(id){
+  const raw = localStorage.getItem(DM_DOC + id);
+  if (!raw){ showToast('Document not found'); updateDocCount(); return; }
+  let d; try { d = JSON.parse(raw); } catch(e){ showToast('Could not read document'); return; }
+  load(15);
+  currentDocId   = d.id;
+  currentDocName = d.name || 'Document';
+  rawPdfBytes    = dmB64ToBytes(d.pdfB64).buffer;
+  signatories    = d.signatories || signatories;
+  zones          = d.zones || [];
+  nextId         = d.nextId || 3;
+  colorIdx       = d.colorIdx || 2;
+  pdfDoc = await pdfjsLib.getDocument({ data: new Uint8Array(rawPdfBytes).slice() }).promise;
+  load(45);
+
+  pageInfos = {};
+  document.getElementById('emptyWrap').style.display = 'none';
+  document.getElementById('modeBar').style.display = 'flex';
+  document.getElementById('btnChangePdf').style.display = 'inline-flex';
+  document.getElementById('btnExport').style.display = 'inline-flex';
+  document.getElementById('btnShareGuide').style.display = 'inline-flex';
+  document.getElementById('docName').textContent = '📄 ' + currentDocName;
+  pdfArea.querySelectorAll('.page-block').forEach(el => el.remove());
+  pdfArea.querySelector('.instr-bar')?.remove();
+
+  const step = 45 / pdfDoc.numPages;
+  for (let i = 1; i <= pdfDoc.numPages; i++){ await renderPage(i); load(45 + i * step); }
+  zones.forEach(z => renderZoneRect(z));
+  renderSigList(); updateZoneList(); updateExportBtn();
+  closeDocList();
+  load(100); setTimeout(unload, 400);
+  showToast('✓ Document restored');
+}
 </script>
 </body>
 </html>
