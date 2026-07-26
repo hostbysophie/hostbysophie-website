@@ -1275,12 +1275,14 @@ function renderPackList() {
     }
   }
   list.innerHTML = html || '<div style="color:var(--ink-soft)">No packs yet.</div>';
-  // Can merge if all packs received — PDF can come from pack if not loaded manually
+  // Can merge when we have a PDF + at least one pack, and either no zones were set up
+  // in this session (just merge the collected packs — they carry their own positions),
+  // or zones were set up and every expected pack has arrived.
   const hasPdf = rawPdfBytes || collectedPacks.some(p => p.pdfB64);
-  const canMerge = hasPdf && allReceived && collectedPacks.length > 0;
+  const canMerge = hasPdf && collectedPacks.length > 0 && (sigsWithZones.length === 0 || allReceived);
   const btn = document.getElementById('btnMerge');
   btn.disabled = !canMerge;
-  btn.title = canMerge ? '' : 'Waiting for all signatories to return their pack';
+  btn.title = canMerge ? '' : (hasPdf ? 'Waiting for all signatories to return their pack' : 'Upload the original PDF first');
 }
 
 function removePack(i) { collectedPacks.splice(i,1); renderPackList(); }
