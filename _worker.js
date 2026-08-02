@@ -279,6 +279,31 @@ export default {
             await env.HBS_CAL.put('manual', JSON.stringify(manual));
             return calJson(await calGetData(env, false), 200);
           }
+          if (action === 'cancel') {
+            const id = String(body.id || '').trim();
+            if (!id) return calJson({ error: 'Missing id' }, 400);
+            const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
+            const before = manual.bookings.length;
+            manual.bookings = manual.bookings.filter(x => x.id !== id);
+            if (manual.bookings.length === before) return calJson({ error: 'Booking not found' }, 404);
+            await env.HBS_CAL.put('manual', JSON.stringify(manual));
+            return calJson(await calGetData(env, false), 200);
+          }
+          if (action === 'note') {
+            const prop = String(body.prop || '').trim();
+            const s = calIso(String(body.s || '')), e = calIso(String(body.e || ''));
+            const note = String(body.note || '').trim().slice(0, 300);
+            if (!prop || !s || !e) return calJson({ error: 'Missing prop/dates' }, 400);
+            const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
+            let hit = manual.bookings.find(x => x.prop === prop && x.s === s && x.e === e);
+            if (hit) {
+              hit.note = note;
+            } else {
+              manual.bookings.push({ id: crypto.randomUUID(), prop, s, e, n: '', t: 'note-only', pf: 'Direct', note, manual: true });
+            }
+            await env.HBS_CAL.put('manual', JSON.stringify(manual));
+            return calJson(await calGetData(env, false), 200);
+          }
           if (action === 'apartment') {
             const name = String(body.name || '').trim();
             if (!name) return calJson({ error: 'Name required' }, 400);
@@ -362,7 +387,7 @@ const CAL_PROPS = [
       {s:'2026-06-06',e:'2026-06-10',n:'Brady',t:'res',pf:'VRBO'},
       {s:'2026-06-14',e:'2026-06-19',n:'Sara',t:'res',pf:'VRBO'},
       {s:'2026-06-24',e:'2026-06-28',n:'Hector Bayardo',t:'res',pf:'VRBO'},
-      {s:'2026-08-19',e:'2026-08-26',n:'Booking guest',t:'res',pf:'Booking'},
+      {s:'2026-08-19',e:'2026-08-26',n:'Edlira Hysenukaj',t:'res',pf:'Booking'},
       {s:'2026-09-04',e:'2026-09-09',n:'Jeremiah',t:'res',pf:'VRBO'} ] },
   { name:'BUBALI 13 L', bg:'#D8C6A6', fg:'#4A3A22',
     seed:[
@@ -375,7 +400,7 @@ const CAL_PROPS = [
     seed:[
       {s:'2026-02-18',e:'2026-03-11',t:'block'},
       {s:'2026-08-17',e:'2026-08-20',n:'Telly',t:'res',pf:'VRBO'},
-      {s:'2026-12-24',e:'2026-12-31',n:'Anatoly',t:'res',pf:'VRBO'} ] },
+      {s:'2026-12-24',e:'2026-12-31',n:'Anatoly Plaks',t:'res',pf:'VRBO'} ] },
   { name:'LODGE #1 POOL SIDE', bg:'#9DB4C7', fg:'#1E2E3A',
     seed:[
       {s:'2025-12-05',e:'2025-12-19',n:'Tracey',t:'res',pf:'VRBO'},
@@ -422,12 +447,12 @@ async function calGetData(env, force) {
     const hasFeeds = (feeds[p.name] || []).some(f => f && f.url);
     const events = (hasFeeds ? ((cache.byProp && cache.byProp[p.name]) || []) : (p.seed || [])).slice();
     manual.bookings.filter(b => b.prop === p.name)
-      .forEach(b => events.push({ s: b.s, e: b.e, n: b.n, t: b.t, pf: b.pf }));
+      .forEach(b => calMergeManual(events, b));
     return { name: p.name, bg: p.bg, fg: p.fg, events };
   });
   (manual.apartments || []).forEach(a => {
     const events = manual.bookings.filter(b => b.prop === a.name)
-      .map(b => ({ s: b.s, e: b.e, n: b.n, t: b.t, pf: b.pf }));
+      .map(b => ({ id: b.id, s: b.s, e: b.e, n: b.n, t: b.t, pf: b.pf, note: b.note }));
     properties.push({ name: a.name, bg: a.bg, fg: a.fg, events });
   });
   return { properties, updated: cache.updated || Date.now() };
@@ -498,6 +523,23 @@ function calDedupe(evs) {
   return Object.values(map).sort((a, b) => (a.s < b.s ? -1 : 1));
 }
 
+// Merge a manual booking into a property's event list: if a feed/seed event
+// already covers the exact same date range, enrich it in place (name/platform/note)
+// instead of stacking a duplicate bar on the calendar. Otherwise append as new.
+function calMergeManual(events, b) {
+  const noteOnly = b.t === 'note-only';
+  const match = events.find(e => e.s === b.s && e.e === b.e && (noteOnly || e.t === b.t));
+  if (match) {
+    if (b.n) match.n = b.n;
+    if (b.pf && !noteOnly) match.pf = b.pf;
+    if (b.note) match.note = b.note;
+    match.manualId = b.id;
+  } else if (!noteOnly) {
+    events.push({ id: b.id, s: b.s, e: b.e, n: b.n, t: b.t, pf: b.pf, note: b.note });
+  }
+  // if noteOnly and nothing matched, the note is silently dropped (no event to attach it to)
+}
+
 function calCleanBooking(b) {
   const prop = String(b.prop || '').trim();
   const s = calIso(String(b.s || '')), e = calIso(String(b.e || ''));
@@ -506,7 +548,9 @@ function calCleanBooking(b) {
   const n = String(b.n || '').trim();
   if (t === 'res' && !n) return null;
   const pf = ['Airbnb', 'Booking', 'VRBO', 'Direct'].includes(b.pf) ? b.pf : 'Direct';
-  return { prop, s, e, n, t, pf, manual: true };
+  const note = String(b.note || '').trim().slice(0, 300);
+  const id = (b.id && typeof b.id === 'string') ? b.id : crypto.randomUUID();
+  return { id, prop, s, e, n, t, pf, note, manual: true };
 }
 
 function calFg(hex) {

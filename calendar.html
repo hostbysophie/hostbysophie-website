@@ -41,6 +41,7 @@
     <label>to <input id="f-end" type="date" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"></label>
     <select id="f-plat" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"><option>Direct</option><option>Booking</option><option>Airbnb</option><option>VRBO</option></select>
     <select id="f-type" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"><option value="res">Reserved</option><option value="block">Blocked</option></select>
+    <input id="f-note" type="text" placeholder="Note (birthday, special request...)" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px; width:220px;">
     <button id="f-save" style="border:0.5px solid #1A3A5C; background:#1A3A5C; color:#FFF; border-radius:4px; padding:5px 12px; cursor:pointer; font-size:12px;">Add</button>
     <button id="f-cancel" style="border:0.5px solid #C9D2DA; background:#FFF; color:#1A3A5C; border-radius:4px; padding:5px 10px; cursor:pointer; font-size:12px;">Cancel</button>
     <span id="f-msg" style="color:#993535;"></span>
@@ -70,6 +71,7 @@
   <div id="sc-tip-name" style="font-weight:bold; color:#1A3A5C; font-size:13px;">&mdash;</div>
   <div id="sc-tip-dates" style="font-size:11px; color:#6B7B85; margin-top:2px;">&mdash;</div>
   <div id="sc-tip-meta" style="font-size:12px; color:#1C2B36; margin-top:6px;">&mdash;</div>
+  <div id="sc-tip-note" style="font-size:11px; color:#7A5B1E; margin-top:6px; display:none; background:#FAF5ED; border-radius:4px; padding:4px 6px;">&mdash;</div>
 </div>
 
 <script>
@@ -138,7 +140,8 @@
         if(ec>0 && sc<curDays){
           var aC=sc*colW+colW/2, dC=ec*colW+colW/2, left=Math.max(0,aC), right=Math.min(trackW,dC), width=right-left; if(width<3)width=3;
           var isRes=(r.t==='res'), bg=isRes?p.bg:'#B4B2A9', fg=isRes?p.fg:'#2C2C2A', showName=width>=34;
-          bars+='<div class="ev" data-name="'+esc(isRes?(r.n||'Guest'):'Blocked')+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):'Owner / not available'))+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(isRes?(r.n||'Guest'):'Blocked'):'')+'</div>';
+          var noteDot=r.note?'<span style="position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:#B8953D;"></span>':'';
+          bars+='<div class="ev" data-name="'+esc(isRes?(r.n||'Guest'):'Blocked')+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):'Owner / not available'))+'" data-note="'+esc(r.note||'')+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(isRes?(r.n||'Guest'):'Blocked'):'')+noteDot+'</div>';
         }
       });
       var rowbg=(pi%2===0)?'#FFFFFF':'#FBFCFD';
@@ -156,6 +159,8 @@
     document.getElementById('sc-tip-name').textContent=bar.dataset.name;
     document.getElementById('sc-tip-dates').textContent=bar.dataset.dates;
     document.getElementById('sc-tip-meta').textContent=bar.dataset.meta;
+    var noteEl=document.getElementById('sc-tip-note');
+    if(bar.dataset.note){ noteEl.textContent='\ud83d\udcdd '+bar.dataset.note; noteEl.style.display='block'; } else { noteEl.style.display='none'; }
     tip.style.display='block';
     var cr=wrap.getBoundingClientRect(), br=bar.getBoundingClientRect();
     var left=br.left-cr.left, maxL=wrap.clientWidth-tip.offsetWidth-6;
@@ -217,16 +222,17 @@
     var n=document.getElementById('f-name').value.trim();
     var s=document.getElementById('f-start').value, e=document.getElementById('f-end').value;
     var pf=document.getElementById('f-plat').value, ty=document.getElementById('f-type').value;
+    var note=document.getElementById('f-note').value.trim();
     var msg=document.getElementById('f-msg');
     if(!prop){ msg.textContent='Pick an apartment'; return; }
     if(!s||!e){ msg.textContent='Dates required'; return; }
     if(e<=s){ msg.textContent='Checkout must be after check-in'; return; }
     if(ty==='res'&&!n){ msg.textContent='Name required'; return; }
     msg.textContent='Saving…';
-    post({action:'booking', prop:prop, s:s, e:e, n:n, t:ty, pf:pf}, function(data){
+    post({action:'booking', prop:prop, s:s, e:e, n:n, t:ty, pf:pf, note:note}, function(data){
       if(!data){ return; }
       if(data.error){ msg.textContent=data.error; return; }
-      msg.textContent=''; form.style.display='none'; document.getElementById('f-name').value='';
+      msg.textContent=''; form.style.display='none'; document.getElementById('f-name').value=''; document.getElementById('f-note').value='';
       viewStart=addDays(d(s),-2); clampView(); apply(data);
     });
   });
