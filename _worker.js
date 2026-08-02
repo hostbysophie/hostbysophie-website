@@ -281,10 +281,18 @@ export default {
           }
           if (action === 'cancel') {
             const id = String(body.id || '').trim();
-            if (!id) return calJson({ error: 'Missing id' }, 400);
             const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
             const before = manual.bookings.length;
-            manual.bookings = manual.bookings.filter(x => x.id !== id);
+            if (id) {
+              manual.bookings = manual.bookings.filter(x => x.id !== id);
+            } else {
+              // Fallback for legacy entries saved before ids existed: match by prop+s+e+n
+              const prop = String(body.prop || '').trim();
+              const s = calIso(String(body.s || '')), e = calIso(String(body.e || ''));
+              const n = String(body.n || '').trim();
+              if (!prop || !s || !e) return calJson({ error: 'Missing id or prop/s/e' }, 400);
+              manual.bookings = manual.bookings.filter(x => !(x.prop === prop && x.s === s && x.e === e && (!n || x.n === n)));
+            }
             if (manual.bookings.length === before) return calJson({ error: 'Booking not found' }, 404);
             await env.HBS_CAL.put('manual', JSON.stringify(manual));
             return calJson(await calGetData(env, false), 200);
