@@ -60,6 +60,7 @@
 </div>
 
 <div id="sc-legend" style="display:flex; gap:10px; flex-wrap:wrap; padding:8px 16px; background:#FAF5ED; font-size:10.5px; border-top:0.5px solid #F0E6D2;"></div>
+<div style="padding:0 16px 8px; background:#FAF5ED; font-size:10px; color:#9C8556; font-style:italic;">📝 Click any reservation or block to add or edit a personal note.</div>
 
 <div id="sc-scroll" style="overflow:hidden; border:0.5px solid #E7ECF1; border-top:none; background:#FFFFFF; min-height:120px;">
   <div id="sc-body" style="padding:16px; color:#6B7B85; font-size:12px;">Loading…</div>
@@ -72,6 +73,14 @@
   <div id="sc-tip-dates" style="font-size:11px; color:#6B7B85; margin-top:2px;">&mdash;</div>
   <div id="sc-tip-meta" style="font-size:12px; color:#1C2B36; margin-top:6px;">&mdash;</div>
   <div id="sc-tip-note" style="font-size:11px; color:#7A5B1E; margin-top:6px; display:none; background:#FAF5ED; border-radius:4px; padding:4px 6px;">&mdash;</div>
+  <div id="sc-tip-noteedit" style="display:none; margin-top:6px;">
+    <textarea id="sc-tip-noteinput" rows="2" placeholder="Note (birthday, special request...)" style="width:100%; box-sizing:border-box; font-size:11px; padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-family:Arial,Helvetica,sans-serif; resize:vertical;"></textarea>
+    <div style="display:flex; gap:6px; margin-top:4px; align-items:center;">
+      <span id="sc-tip-notemsg" style="font-size:10px; color:#993535; margin-right:auto;"></span>
+      <button id="sc-tip-notesave" style="border:0.5px solid #1A3A5C; background:#1A3A5C; color:#FFF; border-radius:4px; padding:3px 10px; cursor:pointer; font-size:11px;">Save note</button>
+      <button id="sc-tip-noteclose" style="border:0.5px solid #C9D2DA; background:#FFF; color:#1A3A5C; border-radius:4px; padding:3px 8px; cursor:pointer; font-size:11px;">Close</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -141,7 +150,7 @@
           var aC=sc*colW+colW/2, dC=ec*colW+colW/2, left=Math.max(0,aC), right=Math.min(trackW,dC), width=right-left; if(width<3)width=3;
           var isRes=(r.t==='res'), bg=isRes?p.bg:'#B4B2A9', fg=isRes?p.fg:'#2C2C2A', showName=width>=34;
           var noteDot=r.note?'<span style="position:absolute;top:2px;right:2px;width:5px;height:5px;border-radius:50%;background:#B8953D;"></span>':'';
-          bars+='<div class="ev" data-name="'+esc(isRes?(r.n||'Guest'):'Blocked')+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):'Owner / not available'))+'" data-note="'+esc(r.note||'')+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(isRes?(r.n||'Guest'):'Blocked'):'')+noteDot+'</div>';
+          bars+='<div class="ev" data-prop="'+esc(p.name)+'" data-s="'+r.s+'" data-e="'+r.e+'" data-name="'+esc(isRes?(r.n||'Guest'):'Blocked')+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):'Owner / not available'))+'" data-note="'+esc(r.note||'')+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(isRes?(r.n||'Guest'):'Blocked'):'')+noteDot+'</div>';
         }
       });
       var rowbg=(pi%2===0)?'#FFFFFF':'#FBFCFD';
@@ -153,7 +162,20 @@
     attach();
   }
 
-  function attach(){ wrap.querySelectorAll('.ev').forEach(function(b){ b.addEventListener('mouseenter',function(){show(b);}); b.addEventListener('mouseleave',scheduleHide); }); }
+  var pinned=false, curBar=null;
+  function attach(){
+    wrap.querySelectorAll('.ev').forEach(function(b){
+      b.addEventListener('mouseenter',function(){ if(!pinned) show(b); });
+      b.addEventListener('mouseleave',function(){ if(!pinned) scheduleHide(); });
+      b.addEventListener('click',function(e){ e.stopPropagation(); openNoteEditor(b); });
+    });
+  }
+  function positionTip(bar){
+    var cr=wrap.getBoundingClientRect(), br=bar.getBoundingClientRect();
+    var left=br.left-cr.left, maxL=wrap.clientWidth-tip.offsetWidth-6;
+    if(left>maxL)left=maxL; if(left<6)left=6;
+    tip.style.left=left+'px'; tip.style.top=(br.bottom-cr.top+6)+'px';
+  }
   function show(bar){
     clearTimeout(hideT);
     document.getElementById('sc-tip-name').textContent=bar.dataset.name;
@@ -161,15 +183,42 @@
     document.getElementById('sc-tip-meta').textContent=bar.dataset.meta;
     var noteEl=document.getElementById('sc-tip-note');
     if(bar.dataset.note){ noteEl.textContent='\ud83d\udcdd '+bar.dataset.note; noteEl.style.display='block'; } else { noteEl.style.display='none'; }
+    document.getElementById('sc-tip-noteedit').style.display='none';
     tip.style.display='block';
-    var cr=wrap.getBoundingClientRect(), br=bar.getBoundingClientRect();
-    var left=br.left-cr.left, maxL=wrap.clientWidth-tip.offsetWidth-6;
-    if(left>maxL)left=maxL; if(left<6)left=6;
-    tip.style.left=left+'px'; tip.style.top=(br.bottom-cr.top+6)+'px';
+    positionTip(bar);
   }
-  function scheduleHide(){hideT=setTimeout(function(){tip.style.display='none';},200);}
+  function openNoteEditor(bar){
+    clearTimeout(hideT);
+    curBar=bar; pinned=true;
+    show(bar);
+    document.getElementById('sc-tip-noteedit').style.display='block';
+    document.getElementById('sc-tip-noteinput').value=bar.dataset.note||'';
+    document.getElementById('sc-tip-notemsg').textContent='';
+    tip.style.display='block';
+    positionTip(bar);
+    document.getElementById('sc-tip-noteinput').focus();
+  }
+  function closeTip(){ pinned=false; curBar=null; tip.style.display='none'; }
+  function scheduleHide(){ if(pinned) return; hideT=setTimeout(function(){tip.style.display='none';},200); }
   tip.addEventListener('mouseenter',function(){clearTimeout(hideT);});
-  tip.addEventListener('mouseleave',scheduleHide);
+  tip.addEventListener('mouseleave',function(){ if(!pinned) scheduleHide(); });
+  document.getElementById('sc-tip-noteclose').addEventListener('click',closeTip);
+  document.getElementById('sc-tip-notesave').addEventListener('click',function(){
+    if(!curBar) return;
+    var note=document.getElementById('sc-tip-noteinput').value.trim();
+    var msg=document.getElementById('sc-tip-notemsg');
+    msg.style.color='#6B7B85'; msg.textContent='Saving\u2026';
+    post({action:'note', prop:curBar.dataset.prop, s:curBar.dataset.s, e:curBar.dataset.e, note:note}, function(data){
+      if(!data){ msg.style.color='#993535'; msg.textContent='Network error'; return; }
+      if(data.error){ msg.style.color='#993535'; msg.textContent=data.error; return; }
+      msg.style.color='#2E7D4F'; msg.textContent='Saved';
+      apply(data);
+      setTimeout(closeTip,700);
+    });
+  });
+  document.addEventListener('click',function(e){
+    if(pinned && !tip.contains(e.target) && !(e.target.classList && e.target.classList.contains('ev'))){ closeTip(); }
+  });
 
   if(window.ResizeObserver){ var rw=0; new ResizeObserver(function(){ var w=scroll.getBoundingClientRect().width; if(Math.abs(w-rw)>6){ rw=w; build(); } }).observe(scroll); }
 
