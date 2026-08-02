@@ -14,6 +14,12 @@
     }
   },
   "kv_namespaces": [
-    { "binding": "SIGN_PACKS", "id": "e4a68697d8144dd28c22bb0377e12014" }
-  ]
+    { "binding": "SIGN_PACKS", "id": "e4a68697d8144dd28c22bb0377e12014" },
+    // Booking calendar store (KV namespace "HBS_CAL")
+    { "binding": "HBS_CAL", "id": "e2a040338ae34e2b983b82e21776d033" }
+  ],
+  // Refresh the merged iCal feeds every 2 hours in the background.
+  "triggers": {
+    "crons": ["0 */2 * * *"]
+  }
 }

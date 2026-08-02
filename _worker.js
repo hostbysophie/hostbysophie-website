@@ -246,9 +246,67 @@ export default {
       });
     }
 
+    // ── Booking calendar: merged iCal feeds + manual entries (KV-backed) ──────
+    //   Reads every configured iCal export (VRBO + Airbnb + Booking + tab.travel)
+    //   server-side (no browser CORS limit), merges them, caches in KV, and
+    //   refreshes lazily when the cache is older than 2h (or on demand).
+    //   Optional: set env.CAL_KEY in Cloudflare to require a passcode.
+    if (url.pathname === '/calendar-data') {
+      if (request.method === 'OPTIONS') {
+        return new Response(null, { status: 204, headers: calCors() });
+      }
+      if (env.CAL_KEY) {
+        const k = url.searchParams.get('k') || request.headers.get('x-cal-key') || '';
+        if (k !== env.CAL_KEY) return calJson({ error: 'Unauthorized' }, 401);
+      }
+      if (!env.HBS_CAL) return calJson({ error: 'Calendar storage not configured' }, 500);
+
+      try {
+        if (request.method === 'GET') {
+          return calJson(await calGetData(env, false), 200);
+        }
+        if (request.method === 'POST') {
+          const body = await request.json().catch(() => ({}));
+          const action = body.action || '';
+          if (action === 'refresh') {
+            return calJson(await calGetData(env, true), 200);
+          }
+          if (action === 'booking') {
+            const b = calCleanBooking(body);
+            if (!b) return calJson({ error: 'Invalid booking' }, 400);
+            const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
+            manual.bookings.push(b);
+            await env.HBS_CAL.put('manual', JSON.stringify(manual));
+            return calJson(await calGetData(env, false), 200);
+          }
+          if (action === 'apartment') {
+            const name = String(body.name || '').trim();
+            if (!name) return calJson({ error: 'Name required' }, 400);
+            const bg = /^#[0-9a-fA-F]{6}$/.test(body.bg || '') ? body.bg : '#9DB4C7';
+            const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
+            const exists = manual.apartments.some(a => a.name === name) || CAL_PROPS.some(p => p.name === name);
+            if (!exists) {
+              manual.apartments.push({ name, bg, fg: calFg(bg) });
+              await env.HBS_CAL.put('manual', JSON.stringify(manual));
+            }
+            return calJson(await calGetData(env, false), 200);
+          }
+          return calJson({ error: 'Unknown action' }, 400);
+        }
+        return new Response('Method not allowed', { status: 405 });
+      } catch (err) {
+        return calJson({ error: 'Calendar error' }, 500);
+      }
+    }
+
     // ── All other requests → serve static assets ──────────────────────────────
     return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', { status: 404 });
-  }
+  },
+
+  // ── Cron (every 2h): refresh the merged iCal feeds in the background ────────
+  async scheduled(event, env, ctx) {
+    if (env.HBS_CAL) ctx.waitUntil(calRefresh(env));
+  },
 };
 
 // UTF-8 safe base64 for the JSON attachment
@@ -276,5 +334,200 @@ function jsonError(message, status) {
   return new Response(JSON.stringify({ error: message }), {
     status,
     headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+  });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Booking calendar engine
+// ══════════════════════════════════════════════════════════════════════════
+// Each property has its brand colour and the pilot data as a `seed` fallback.
+// The iCal export URLs are NOT stored here (they carry access tokens). They live
+// in the Cloudflare secret CAL_FEEDS — a JSON map of { "<PROPERTY>": [ {pf,url} ] }.
+// A property with no configured feed falls back to its `seed` events so the page
+// is never blank; the moment its feed is present, live data replaces the seed.
+const CAL_TTL_MS = 2 * 60 * 60 * 1000; // refresh feeds when cache older than 2h
+
+const CAL_PROPS = [
+  { name:'SWEET CHALET', bg:'#5DCAA5', fg:'#04342C',
+    seed:[
+      {s:'2025-10-25',e:'2025-11-01',n:'Scot',t:'res',pf:'VRBO'},
+      {s:'2025-11-12',e:'2025-11-18',n:'Marcel',t:'res',pf:'VRBO'},
+      {s:'2025-12-27',e:'2026-01-02',t:'block'},
+      {s:'2026-02-01',e:'2026-02-06',n:'jay',t:'res',pf:'VRBO'},
+      {s:'2026-02-08',e:'2026-02-17',n:'Travis',t:'res',pf:'VRBO'},
+      {s:'2026-02-20',e:'2026-02-27',n:'Jay',t:'res',pf:'VRBO'},
+      {s:'2026-04-14',e:'2026-04-18',n:'Nishauna',t:'res',pf:'VRBO'},
+      {s:'2026-04-28',e:'2026-05-05',n:'Vickie',t:'res',pf:'VRBO'},
+      {s:'2026-05-09',e:'2026-06-03',n:'Stas',t:'res',pf:'VRBO'},
+      {s:'2026-06-06',e:'2026-06-10',n:'Brady',t:'res',pf:'VRBO'},
+      {s:'2026-06-14',e:'2026-06-19',n:'Sara',t:'res',pf:'VRBO'},
+      {s:'2026-06-24',e:'2026-06-28',n:'Hector Bayardo',t:'res',pf:'VRBO'},
+      {s:'2026-08-19',e:'2026-08-26',n:'Booking guest',t:'res',pf:'Booking'},
+      {s:'2026-09-04',e:'2026-09-09',n:'Jeremiah',t:'res',pf:'VRBO'} ] },
+  { name:'BUBALI 13 L', bg:'#D8C6A6', fg:'#4A3A22',
+    seed:[
+      {s:'2026-03-24',e:'2026-04-06',t:'block'},
+      {s:'2026-05-26',e:'2026-05-31',t:'block'},
+      {s:'2026-06-03',e:'2026-06-16',t:'block'} ] },
+  { name:'SOLARA SUITE', bg:'#7FD9E0', fg:'#04343B',
+    seed:[] },
+  { name:'TROPICAL HOUSE', bg:'#F0997B', fg:'#4A1B0C',
+    seed:[
+      {s:'2026-02-18',e:'2026-03-11',t:'block'},
+      {s:'2026-08-17',e:'2026-08-20',n:'Telly',t:'res',pf:'VRBO'},
+      {s:'2026-12-24',e:'2026-12-31',n:'Anatoly',t:'res',pf:'VRBO'} ] },
+  { name:'LODGE #1 POOL SIDE', bg:'#9DB4C7', fg:'#1E2E3A',
+    seed:[
+      {s:'2025-12-05',e:'2025-12-19',n:'Tracey',t:'res',pf:'VRBO'},
+      {s:'2026-03-06',e:'2026-03-10',n:'Amanda',t:'res',pf:'VRBO'},
+      {s:'2026-03-24',e:'2026-04-02',n:'Len',t:'res',pf:'VRBO'},
+      {s:'2027-01-31',e:'2027-02-08',n:'Carolyn',t:'res',pf:'VRBO'} ] },
+  { name:'LODGE #2 EUCALYPTUS', bg:'#A4C2F4', fg:'#0C2E5A',
+    seed:[
+      {s:'2025-03-25',e:'2025-04-10',n:'Jean-Pierre',t:'res',pf:'VRBO'},
+      {s:'2026-01-22',e:'2026-01-28',n:'Nicole',t:'res',pf:'VRBO'} ] },
+  { name:'LODGE #3 FLAMINGO', bg:'#ED9DB4', fg:'#6B243E',
+    seed:[
+      {s:'2025-10-25',e:'2025-11-01',n:'Claudia',t:'res',pf:'VRBO'},
+      {s:'2026-03-24',e:'2026-03-26',n:'Benjamin',t:'res',pf:'VRBO'},
+      {s:'2026-04-02',e:'2026-04-09',n:'Carlos',t:'res',pf:'VRBO'} ] },
+  { name:'LODGE #4 BANANAQUIT', bg:'#C0DD97', fg:'#27500A',
+    seed:[] },
+  { name:'LODGE #5 HOOIBERG', bg:'#9CCB8C', fg:'#173404',
+    seed:[
+      {s:'2025-08-12',e:'2025-08-27',n:'Miranda',t:'res',pf:'VRBO'},
+      {s:'2025-12-15',e:'2025-12-25',n:'santiago',t:'res',pf:'VRBO'},
+      {s:'2025-12-28',e:'2025-12-31',n:'wei',t:'res',pf:'VRBO'},
+      {s:'2026-01-19',e:'2026-01-24',n:'Erin',t:'res',pf:'VRBO'},
+      {s:'2026-04-04',e:'2026-04-11',n:'Tori',t:'res',pf:'VRBO'},
+      {s:'2026-07-14',e:'2026-07-20',n:'Timothy',t:'res',pf:'VRBO'} ] },
+];
+
+// Feed URLs come from the encrypted CAL_FEEDS secret (never committed to git).
+function calFeeds(env) {
+  try { return env.CAL_FEEDS ? JSON.parse(env.CAL_FEEDS) : {}; }
+  catch (e) { return {}; }
+}
+
+async function calGetData(env, force) {
+  let cache = await env.HBS_CAL.get('feeds', 'json');
+  const stale = !cache || (Date.now() - (cache.updated || 0) > CAL_TTL_MS);
+  if (force || stale) {
+    try { cache = await calRefresh(env); }
+    catch (e) { if (!cache) cache = { byProp: {}, updated: Date.now() }; }
+  }
+  const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
+  const feeds = calFeeds(env);
+  const properties = CAL_PROPS.map(p => {
+    const hasFeeds = (feeds[p.name] || []).some(f => f && f.url);
+    const events = (hasFeeds ? ((cache.byProp && cache.byProp[p.name]) || []) : (p.seed || [])).slice();
+    manual.bookings.filter(b => b.prop === p.name)
+      .forEach(b => events.push({ s: b.s, e: b.e, n: b.n, t: b.t, pf: b.pf }));
+    return { name: p.name, bg: p.bg, fg: p.fg, events };
+  });
+  (manual.apartments || []).forEach(a => {
+    const events = manual.bookings.filter(b => b.prop === a.name)
+      .map(b => ({ s: b.s, e: b.e, n: b.n, t: b.t, pf: b.pf }));
+    properties.push({ name: a.name, bg: a.bg, fg: a.fg, events });
+  });
+  return { properties, updated: cache.updated || Date.now() };
+}
+
+async function calRefresh(env) {
+  const feeds = calFeeds(env);
+  const byProp = {};
+  for (const p of CAL_PROPS) {
+    const list = feeds[p.name] || [];
+    const evs = [];
+    for (const f of list) {
+      if (!f || !f.url) continue;
+      const url = String(f.url).replace(/^http:\/\//i, 'https://'); // force HTTPS
+      try {
+        const r = await fetch(url, { headers: { 'User-Agent': 'HBS-Calendar/1.0' } });
+        if (r.ok) evs.push(...calParseICS(await r.text(), f.pf || 'Direct'));
+      } catch (e) { /* skip unreachable feed, keep the rest */ }
+    }
+    byProp[p.name] = calDedupe(evs);
+  }
+  const data = { byProp, updated: Date.now() };
+  await env.HBS_CAL.put('feeds', JSON.stringify(data));
+  return data;
+}
+
+function calParseICS(text, pf) {
+  const out = [];
+  if (!text) return out;
+  text = text.replace(/\r\n/g, '\n').replace(/\n[ \t]/g, ''); // unfold folded lines
+  const blocks = text.split('BEGIN:VEVENT').slice(1);
+  for (const b of blocks) {
+    const body = b.split('END:VEVENT')[0];
+    const get = (k) => {
+      const m = body.match(new RegExp('\\n' + k + '[^:\\n]*:([^\\n]*)'));
+      return m ? m[1].trim() : '';
+    };
+    const s = calIso(get('DTSTART')), e = calIso(get('DTEND'));
+    if (!s || !e) continue;
+    const { t, n } = calClassify(get('SUMMARY'));
+    out.push({ s, e, n, t, pf });
+  }
+  return out;
+}
+
+function calIso(v) {
+  const m = (v || '').match(/(\d{4})-?(\d{2})-?(\d{2})/);
+  return m ? (m[1] + '-' + m[2] + '-' + m[3]) : '';
+}
+
+function calClassify(summary) {
+  const s = (summary || '').toLowerCase();
+  if (/not available|unavailable|blocked|closed|owner|maintenance/.test(s)) return { t: 'block', n: '' };
+  let n = '';
+  const m = summary.match(/reserved\s*[-–—:]\s*(.+)/i);
+  if (m) n = m[1].trim();
+  else if (summary && !/^reserved$/i.test(summary) && !/^airbnb/i.test(summary) && !/^booking/i.test(summary)) n = summary.trim();
+  return { t: 'res', n };
+}
+
+function calDedupe(evs) {
+  const map = {};
+  for (const e of evs) {
+    const k = e.s + '|' + e.e;
+    if (!map[k]) map[k] = e;
+    else if (!map[k].n && e.n) map[k] = e; // prefer the copy that carries a guest name
+  }
+  return Object.values(map).sort((a, b) => (a.s < b.s ? -1 : 1));
+}
+
+function calCleanBooking(b) {
+  const prop = String(b.prop || '').trim();
+  const s = calIso(String(b.s || '')), e = calIso(String(b.e || ''));
+  if (!prop || !s || !e || e <= s) return null;
+  const t = b.t === 'block' ? 'block' : 'res';
+  const n = String(b.n || '').trim();
+  if (t === 'res' && !n) return null;
+  const pf = ['Airbnb', 'Booking', 'VRBO', 'Direct'].includes(b.pf) ? b.pf : 'Direct';
+  return { prop, s, e, n, t, pf, manual: true };
+}
+
+function calFg(hex) {
+  hex = hex.replace('#', '');
+  const r = parseInt(hex.substr(0, 2), 16) / 255,
+        g = parseInt(hex.substr(2, 2), 16) / 255,
+        b = parseInt(hex.substr(4, 2), 16) / 255;
+  return (0.299 * r + 0.587 * g + 0.114 * b) > 0.55 ? '#1C2B36' : '#FFFFFF';
+}
+
+function calCors() {
+  return {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, x-cal-key',
+  };
+}
+
+function calJson(obj, status) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { 'Content-Type': 'application/json', ...calCors() },
   });
 }

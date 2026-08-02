@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Host By Sophie — Booking calendar</title>
+<style>
+  body{margin:0;background:#F2F5F8;font-family:Arial,Helvetica,sans-serif;padding:20px;}
+  .card{max-width:100%;margin:0 auto;}
+  input,select,button{font-family:Arial,Helvetica,sans-serif;}
+</style>
+</head>
+<body>
+<div class="card">
+<div id="sc-wrap" style="position:relative; font-family:Arial, Helvetica, sans-serif;">
+
+<div style="background:#1A3A5C; border-radius:6px 6px 0 0; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+  <span style="font-size:16px; font-weight:bold; color:#FFFFFF;">HOST BY SOPHIE <span style="color:#B8953D; font-weight:normal; font-style:italic; font-size:12px;">&middot; Booking calendar</span></span>
+  <span style="display:inline-flex; align-items:center; gap:6px;">
+    <button id="sc-prev" aria-label="Previous" style="border:0.5px solid #E7ECF1; background:#FFFFFF; color:#1A3A5C; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:12px;">&lsaquo;</button>
+    <button id="sc-next" aria-label="Next" style="border:0.5px solid #E7ECF1; background:#FFFFFF; color:#1A3A5C; border-radius:5px; padding:3px 8px; cursor:pointer; font-size:12px;">&rsaquo;</button>
+    <button id="sc-add" style="border:0.5px solid #B8953D; background:#B8953D; color:#FFFFFF; border-radius:5px; padding:3px 10px; cursor:pointer; font-size:11px;">+ Booking</button>
+    <button id="sc-addprop" style="border:0.5px solid #1A3A5C; background:#FFFFFF; color:#1A3A5C; border-radius:5px; padding:3px 10px; cursor:pointer; font-size:11px;">+ Apartment</button>
+    <button id="sc-today" style="border:0.5px solid #B8953D; background:#FAF5ED; color:#1A3A5C; border-radius:5px; padding:3px 9px; cursor:pointer; font-size:11px;">Today</button>
+    <button id="sc-out" aria-label="Zoom out" style="border:0.5px solid #E7ECF1; background:#FFFFFF; color:#1A3A5C; border-radius:5px; padding:3px 9px; cursor:pointer; font-size:13px;">&minus;</button>
+    <button id="sc-in" aria-label="Zoom in" style="border:0.5px solid #E7ECF1; background:#FFFFFF; color:#1A3A5C; border-radius:5px; padding:3px 9px; cursor:pointer; font-size:13px;">+</button>
+    <span id="sc-zlabel" style="font-size:11px; color:#E7ECF1;">2 months</span>
+    <button id="sc-refresh" style="border:0.5px solid #E7ECF1; background:#FFFFFF; color:#1A3A5C; border-radius:5px; padding:3px 9px; cursor:pointer; font-size:11px;">&#8635; Refresh</button>
+    <span id="sc-updated" style="font-size:10px; color:#9FB4C7;">&mdash;</span>
+  </span>
+</div>
+<div style="height:3px; background:#B8953D;"></div>
+
+<div id="sc-form" style="display:none; background:#FAF5ED; border-bottom:0.5px solid #E7ECF1; padding:10px 16px; font-size:12px; color:#1C2B36;">
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <strong style="font-size:11px;">Booking:</strong>
+    <select id="f-prop" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"></select>
+    <input id="f-name" type="text" placeholder="Guest name" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px; width:140px;">
+    <label>from <input id="f-start" type="date" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"></label>
+    <label>to <input id="f-end" type="date" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"></label>
+    <select id="f-plat" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"><option>Direct</option><option>Booking</option><option>Airbnb</option><option>VRBO</option></select>
+    <select id="f-type" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px;"><option value="res">Reserved</option><option value="block">Blocked</option></select>
+    <button id="f-save" style="border:0.5px solid #1A3A5C; background:#1A3A5C; color:#FFF; border-radius:4px; padding:5px 12px; cursor:pointer; font-size:12px;">Add</button>
+    <button id="f-cancel" style="border:0.5px solid #C9D2DA; background:#FFF; color:#1A3A5C; border-radius:4px; padding:5px 10px; cursor:pointer; font-size:12px;">Cancel</button>
+    <span id="f-msg" style="color:#993535;"></span>
+  </div>
+</div>
+
+<div id="sc-pform" style="display:none; background:#EEF3F8; border-bottom:0.5px solid #E7ECF1; padding:10px 16px; font-size:12px; color:#1C2B36;">
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <strong style="font-size:11px;">Apartment:</strong>
+    <input id="p-name" type="text" placeholder="Apartment name" style="padding:4px 6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px; width:200px;">
+    <label>colour <input id="p-color" type="color" value="#9DB4C7" style="width:36px; height:28px; border:0.5px solid #C9D2DA; border-radius:4px; padding:0; cursor:pointer;"></label>
+    <button id="p-save" style="border:0.5px solid #1A3A5C; background:#1A3A5C; color:#FFF; border-radius:4px; padding:5px 12px; cursor:pointer; font-size:12px;">Add apartment</button>
+    <button id="p-cancel" style="border:0.5px solid #C9D2DA; background:#FFF; color:#1A3A5C; border-radius:4px; padding:5px 10px; cursor:pointer; font-size:12px;">Cancel</button>
+    <span id="p-msg" style="color:#993535;"></span>
+  </div>
+</div>
+
+<div id="sc-legend" style="display:flex; gap:10px; flex-wrap:wrap; padding:8px 16px; background:#FAF5ED; font-size:10.5px; border-top:0.5px solid #F0E6D2;"></div>
+
+<div id="sc-scroll" style="overflow:hidden; border:0.5px solid #E7ECF1; border-top:none; background:#FFFFFF; min-height:120px;">
+  <div id="sc-body" style="padding:16px; color:#6B7B85; font-size:12px;">Loading…</div>
+</div>
+
+<div style="background:#1A3A5C; border-radius:0 0 6px 6px; padding:7px 16px; font-size:11px; color:#E7ECF1; font-style:italic;">hostbysophie@gmail.com &middot; +297 593 18 74 &middot; hostbysophie.com &middot; @hostbysophie</div>
+
+<div id="sc-tip" style="display:none; position:absolute; z-index:50; width:220px; background:#FFFFFF; border:0.5px solid #1A3A5C; border-radius:8px; padding:10px 12px;">
+  <div id="sc-tip-name" style="font-weight:bold; color:#1A3A5C; font-size:13px;">&mdash;</div>
+  <div id="sc-tip-dates" style="font-size:11px; color:#6B7B85; margin-top:2px;">&mdash;</div>
+  <div id="sc-tip-meta" style="font-size:12px; color:#1C2B36; margin-top:6px;">&mdash;</div>
+</div>
+
+<script>
+(function(){
+  var LABEL=132, monthsVisible=2, curDays=61;
+  var DOW=['S','M','T','W','T','F','S'];
+  var MONL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var properties=[];               // filled from /calendar-data
+  var API='/calendar-data';
+  var CALKEY=localStorage.getItem('hbs_cal_key')||'';
+
+  // dynamic "today"
+  function pad(n){return (n<10?'0':'')+n;}
+  var _n=new Date(), TODAY=_n.getFullYear()+'-'+pad(_n.getMonth()+1)+'-'+pad(_n.getDate());
+
+  function d(str){var a=str.split('-');return new Date(Date.UTC(+a[0],+a[1]-1,+a[2]));}
+  function addDays(x,n){return new Date(x.getTime()+n*86400000);}
+  function between(a,b){return Math.round((b.getTime()-a.getTime())/86400000);}
+  function fmt(x){return MONL[x.getUTCMonth()].slice(0,3)+' '+x.getUTCDate()+', '+x.getUTCFullYear();}
+  function mkey(x){return x.getUTCFullYear()*12+x.getUTCMonth();}
+  function esc(s){return (''+s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+  function lum(hex){ hex=hex.replace('#',''); var r=parseInt(hex.substr(0,2),16)/255,g=parseInt(hex.substr(2,2),16)/255,b=parseInt(hex.substr(4,2),16)/255; return 0.299*r+0.587*g+0.114*b; }
+
+  var today=d(TODAY);
+  var viewStart=addDays(today,-2);
+  var scroll=document.getElementById('sc-scroll');
+  var wrap=document.getElementById('sc-wrap');
+  var tip=document.getElementById('sc-tip');
+  var hideT;
+
+  function refreshMeta(){
+    var leg=document.getElementById('sc-legend'), lh='';
+    properties.forEach(function(p){ lh+='<span style="display:inline-flex;align-items:center;gap:4px;color:#1C2B36;"><span style="width:10px;height:10px;border-radius:3px;background:'+p.bg+';display:inline-block;"></span>'+esc(p.name)+'</span>'; });
+    lh+='<span style="display:inline-flex;align-items:center;gap:4px;color:#1C2B36;"><span style="width:10px;height:10px;border-radius:3px;background:#B4B2A9;display:inline-block;"></span>Blocked</span>';
+    leg.innerHTML=lh;
+    var fp=document.getElementById('f-prop'); fp.innerHTML='';
+    properties.forEach(function(p,i){ var o=document.createElement('option'); o.value=i; o.textContent=p.name; fp.appendChild(o); });
+  }
+
+  function clampView(){ var lo=d('2024-06-01'), hi=d('2029-06-01'); if(viewStart<lo)viewStart=lo; if(viewStart>hi)viewStart=hi; }
+
+  function build(){
+    var W=Math.round(scroll.getBoundingClientRect().width)||scroll.clientWidth||900;
+    curDays=Math.max(7,Math.round(monthsVisible*30.4));
+    var colW=Math.max(6,(W-LABEL)/curDays), trackW=curDays*colW, totalW=LABEL+trackW;
+    var cols=[]; for(var k=0;k<curDays;k++) cols.push(addDays(viewStart,k));
+
+    var mRow='<div style="display:flex;"><div style="width:'+LABEL+'px;box-sizing:border-box;background:#B8953D;color:#FFF;padding:5px 8px;font-size:11px;">Month</div>';
+    var k2=0;
+    while(k2<curDays){ var mm=cols[k2].getUTCMonth(),yy=cols[k2].getUTCFullYear(),span=0; while(k2+span<curDays && cols[k2+span].getUTCMonth()===mm && cols[k2+span].getUTCFullYear()===yy) span++; var par=mkey(cols[k2])%2; mRow+='<div style="width:'+(span*colW)+'px;box-sizing:border-box;background:'+(par?'#C9A85B':'#B8953D')+';color:#FFF;font-weight:bold;font-size:11px;text-align:center;border-left:0.5px solid #efe0bd;padding:4px 0;white-space:nowrap;overflow:hidden;">'+MONL[mm]+' '+yy+'</div>'; k2+=span; }
+    mRow+='</div>';
+
+    var dRow='<div style="display:flex;"><div style="width:'+LABEL+'px;box-sizing:border-box;background:#1A3A5C;color:#FFF;padding:4px 8px;font-size:11px;">Property</div>';
+    for(var k=0;k<curDays;k++){ var w=cols[k].getUTCDay(),isT=(cols[k].getTime()===today.getTime()),par=mkey(cols[k])%2; dRow+='<div style="width:'+colW+'px;box-sizing:border-box;background:'+(isT?'#12294a':(par?'#22456B':'#1A3A5C'))+';padding:2px 0;text-align:center;line-height:1.15;'+(isT?'border-left:2px solid #B8953D;border-right:2px solid #B8953D;':'')+'"><div style="font-size:8px;color:'+((w===0||w===6)?'#E0B84A':'#8FA3B8')+';">'+DOW[w]+'</div><div style="font-size:10px;color:#FFF;font-weight:'+(isT?'bold':'normal')+';">'+cols[k].getUTCDate()+'</div></div>'; }
+    dRow+='</div>';
+
+    var grid='';
+    for(var k=0;k<curDays;k++){ var isT2=(cols[k].getTime()===today.getTime()),par2=mkey(cols[k])%2; grid+='<div style="width:'+colW+'px;box-sizing:border-box;height:100%;'+(isT2?'border-left:2px solid #B8953D;border-right:2px solid #B8953D;':(par2?'background:#EEF3F8;':''))+'border-bottom:0.5px solid #E7ECF1;"></div>'; }
+
+    var rows='';
+    if(!properties.length){ rows='<div style="padding:24px;color:#6B7B85;font-size:12px;">No apartments configured yet.</div>'; }
+    properties.forEach(function(p,pi){
+      var bars='';
+      (p.events||[]).forEach(function(r){
+        var sc=between(viewStart,d(r.s)), ec=between(viewStart,d(r.e));
+        if(ec>0 && sc<curDays){
+          var aC=sc*colW+colW/2, dC=ec*colW+colW/2, left=Math.max(0,aC), right=Math.min(trackW,dC), width=right-left; if(width<3)width=3;
+          var isRes=(r.t==='res'), bg=isRes?p.bg:'#B4B2A9', fg=isRes?p.fg:'#2C2C2A', showName=width>=34;
+          bars+='<div class="ev" data-name="'+esc(isRes?(r.n||'Guest'):'Blocked')+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):'Owner / not available'))+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(isRes?(r.n||'Guest'):'Blocked'):'')+'</div>';
+        }
+      });
+      var rowbg=(pi%2===0)?'#FFFFFF':'#FBFCFD';
+      rows+='<div style="display:flex;"><div style="width:'+LABEL+'px;box-sizing:border-box;background:'+rowbg+';color:#1C2B36;padding:7px 8px;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:0.5px solid #E7ECF1;font-weight:bold;"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:'+p.bg+';margin-right:5px;"></span>'+esc(p.name)+'</div><div style="position:relative;width:'+trackW+'px;height:30px;background:'+rowbg+';"><div style="position:absolute;inset:0;display:flex;">'+grid+'</div><div style="position:absolute;inset:0;">'+bars+'</div></div></div>';
+    });
+
+    document.getElementById('sc-body').innerHTML='<div style="width:'+totalW+'px;">'+mRow+dRow+rows+'</div>';
+    document.getElementById('sc-zlabel').textContent=(monthsVisible%1===0?monthsVisible:monthsVisible.toFixed(1))+' months';
+    attach();
+  }
+
+  function attach(){ wrap.querySelectorAll('.ev').forEach(function(b){ b.addEventListener('mouseenter',function(){show(b);}); b.addEventListener('mouseleave',scheduleHide); }); }
+  function show(bar){
+    clearTimeout(hideT);
+    document.getElementById('sc-tip-name').textContent=bar.dataset.name;
+    document.getElementById('sc-tip-dates').textContent=bar.dataset.dates;
+    document.getElementById('sc-tip-meta').textContent=bar.dataset.meta;
+    tip.style.display='block';
+    var cr=wrap.getBoundingClientRect(), br=bar.getBoundingClientRect();
+    var left=br.left-cr.left, maxL=wrap.clientWidth-tip.offsetWidth-6;
+    if(left>maxL)left=maxL; if(left<6)left=6;
+    tip.style.left=left+'px'; tip.style.top=(br.bottom-cr.top+6)+'px';
+  }
+  function scheduleHide(){hideT=setTimeout(function(){tip.style.display='none';},200);}
+  tip.addEventListener('mouseenter',function(){clearTimeout(hideT);});
+  tip.addEventListener('mouseleave',scheduleHide);
+
+  if(window.ResizeObserver){ var rw=0; new ResizeObserver(function(){ var w=scroll.getBoundingClientRect().width; if(Math.abs(w-rw)>6){ rw=w; build(); } }).observe(scroll); }
+
+  var levels=[1,1.5,2,3,4,6];
+  function move(dir){ var step=Math.max(1,Math.round(curDays*0.34)); viewStart=addDays(viewStart, dir*step); clampView(); build(); }
+  function zoom(dir){ var cd=addDays(viewStart, Math.round(curDays/2)); var pos=levels.indexOf(monthsVisible); if(pos<0)pos=2; pos=Math.max(0,Math.min(levels.length-1,pos+dir)); monthsVisible=levels[pos]; curDays=Math.round(monthsVisible*30.4); viewStart=addDays(cd, -Math.round(curDays/2)); clampView(); build(); }
+  document.getElementById('sc-today').addEventListener('click',function(){ viewStart=addDays(today,-2); build(); });
+  document.getElementById('sc-prev').addEventListener('click',function(){ move(-1); });
+  document.getElementById('sc-next').addEventListener('click',function(){ move(1); });
+  document.getElementById('sc-in').addEventListener('click',function(){ zoom(-1); });
+  document.getElementById('sc-out').addEventListener('click',function(){ zoom(1); });
+  scroll.addEventListener('wheel',function(e){ if(Math.abs(e.deltaY)>=Math.abs(e.deltaX)){ var step=Math.max(1,Math.round(curDays*0.12)); viewStart=addDays(viewStart,(e.deltaY>0?step:-step)); clampView(); build(); e.preventDefault(); } },{passive:false});
+
+  var form=document.getElementById('sc-form'), pform=document.getElementById('sc-pform');
+  document.getElementById('sc-add').addEventListener('click',function(){ pform.style.display='none'; form.style.display=(form.style.display==='none'?'block':'none'); });
+  document.getElementById('sc-addprop').addEventListener('click',function(){ form.style.display='none'; pform.style.display=(pform.style.display==='none'?'block':'none'); });
+  document.getElementById('f-cancel').addEventListener('click',function(){ form.style.display='none'; document.getElementById('f-msg').textContent=''; });
+  document.getElementById('p-cancel').addEventListener('click',function(){ pform.style.display='none'; document.getElementById('p-msg').textContent=''; });
+
+  // ── Server communication ────────────────────────────────────────────────
+  function keyQS(){ return CALKEY ? ('?k='+encodeURIComponent(CALKEY)) : ''; }
+  function apply(data){
+    if(data && data.properties){ properties=data.properties; refreshMeta(); build(); setUpdated(data.updated); }
+  }
+  function handleAuth(res){
+    if(res.status===401){
+      var k=prompt('Calendar passcode:');
+      if(k){ CALKEY=k; localStorage.setItem('hbs_cal_key',k); load(); }
+      return true;
+    }
+    return false;
+  }
+  function load(){
+    fetch(API+keyQS()).then(function(res){
+      if(handleAuth(res)) return null;
+      return res.json();
+    }).then(function(data){ if(data) apply(data); }).catch(function(){
+      document.getElementById('sc-body').textContent='Could not load calendar data.';
+    });
+  }
+  function post(payload, done){
+    fetch(API+keyQS(),{ method:'POST', headers:{'Content-Type':'application/json', 'x-cal-key':CALKEY}, body:JSON.stringify(payload) })
+      .then(function(res){ if(handleAuth(res)) return null; return res.json(); })
+      .then(function(data){ if(done) done(data); }).catch(function(){ if(done) done({error:'Network error'}); });
+  }
+
+  document.getElementById('f-save').addEventListener('click',function(){
+    var pi=+document.getElementById('f-prop').value;
+    var prop=properties[pi] ? properties[pi].name : '';
+    var n=document.getElementById('f-name').value.trim();
+    var s=document.getElementById('f-start').value, e=document.getElementById('f-end').value;
+    var pf=document.getElementById('f-plat').value, ty=document.getElementById('f-type').value;
+    var msg=document.getElementById('f-msg');
+    if(!prop){ msg.textContent='Pick an apartment'; return; }
+    if(!s||!e){ msg.textContent='Dates required'; return; }
+    if(e<=s){ msg.textContent='Checkout must be after check-in'; return; }
+    if(ty==='res'&&!n){ msg.textContent='Name required'; return; }
+    msg.textContent='Saving…';
+    post({action:'booking', prop:prop, s:s, e:e, n:n, t:ty, pf:pf}, function(data){
+      if(!data){ return; }
+      if(data.error){ msg.textContent=data.error; return; }
+      msg.textContent=''; form.style.display='none'; document.getElementById('f-name').value='';
+      viewStart=addDays(d(s),-2); clampView(); apply(data);
+    });
+  });
+
+  document.getElementById('p-save').addEventListener('click',function(){
+    var name=document.getElementById('p-name').value.trim();
+    var color=document.getElementById('p-color').value;
+    var msg=document.getElementById('p-msg');
+    if(!name){ msg.textContent='Name required'; return; }
+    msg.textContent='Saving…';
+    post({action:'apartment', name:name, bg:color}, function(data){
+      if(!data){ return; }
+      if(data.error){ msg.textContent=data.error; return; }
+      msg.textContent=''; pform.style.display='none'; document.getElementById('p-name').value='';
+      apply(data);
+    });
+  });
+
+  function fmtUpdated(ts){
+    if(!ts) return '—';
+    var t=new Date(ts); return 'Updated '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2);
+  }
+  function setUpdated(ts){ document.getElementById('sc-updated').textContent=fmtUpdated(ts||Date.now()); }
+
+  var rbtn=document.getElementById('sc-refresh');
+  rbtn.addEventListener('click',function(){
+    if(rbtn.disabled)return; rbtn.disabled=true; var o=rbtn.innerHTML; rbtn.textContent='Syncing…';
+    post({action:'refresh'}, function(data){ rbtn.innerHTML=o; rbtn.disabled=false; if(data && data.properties) apply(data); });
+  });
+
+  refreshMeta(); build(); load();
+})();
+</script>
+</div>
+</div>
+</body>
+</html>
