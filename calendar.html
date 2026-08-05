@@ -211,23 +211,30 @@
   scroll.addEventListener('wheel',function(e){ if(Math.abs(e.deltaY)>=Math.abs(e.deltaX)){ var step=Math.max(1,Math.round(curDays*0.12)); viewStart=addDays(viewStart,(e.deltaY>0?step:-step)); clampView(); build(); e.preventDefault(); } },{passive:false});
 
   // ── Touch / swipe horizontal scroll (mobile — e.g. Android, where there's no right-click drag) ──
-  // Live re-render as the finger moves (like the wheel handler above), so the
-  // view keeps advancing for as long as the drag continues — not capped to
-  // the width of a single swipe.
+  // Live re-render as the finger moves (like the wheel handler above). Movement
+  // is amplified (SENSITIVITY) so a normal swipe covers weeks/months, not just
+  // a couple of days, and re-renders are batched to one per animation frame so
+  // fast dragging doesn't get throttled by repeated full rebuilds.
   (function(){
-    var lastX=null, lastY=null, active=false, colWtouch=1, carry=0;
+    var SENSITIVITY=4.5; // higher = faster per pixel of finger movement
+    var lastX=null, lastY=null, active=false, colWtouch=1, carry=0, pendingDays=0, raf=null;
+    function flush(){
+      raf=null;
+      if(pendingDays===0) return;
+      viewStart=addDays(viewStart,pendingDays); pendingDays=0; clampView(); build();
+    }
     scroll.addEventListener('touchstart',function(e){
       if(e.touches.length!==1) return;
-      lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; active=false; carry=0;
+      lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; active=false; carry=0; pendingDays=0;
       var W=Math.round(scroll.getBoundingClientRect().width)||scroll.clientWidth||900;
-      colWtouch=Math.max(3,(W-LABEL)/curDays);
+      colWtouch=Math.max(1,((W-LABEL)/curDays)/SENSITIVITY);
     },{passive:true});
     scroll.addEventListener('touchmove',function(e){
       if(lastX===null || e.touches.length!==1) return;
       var x=e.touches[0].clientX, y=e.touches[0].clientY;
       var dx=x-lastX, dy=y-lastY;
       if(!active){
-        if(Math.abs(dx)<6 && Math.abs(dy)<6) return;
+        if(Math.abs(dx)<5 && Math.abs(dy)<5) return;
         if(Math.abs(dx)<=Math.abs(dy)) return; // vertical gesture: let the page scroll normally
         active=true;
       }
@@ -235,9 +242,9 @@
       lastX=x; lastY=y;
       carry+=dx;
       var step=Math.trunc(-carry/colWtouch);
-      if(step!==0){ carry+=step*colWtouch; viewStart=addDays(viewStart,step); clampView(); build(); }
+      if(step!==0){ carry+=step*colWtouch; pendingDays+=step; if(raf===null) raf=requestAnimationFrame(flush); }
     },{passive:false});
-    function endTouch(){ lastX=null; lastY=null; active=false; carry=0; }
+    function endTouch(){ lastX=null; lastY=null; active=false; carry=0; if(raf!==null){ cancelAnimationFrame(raf); flush(); } }
     scroll.addEventListener('touchend',endTouch,{passive:true});
     scroll.addEventListener('touchcancel',endTouch,{passive:true});
   })();
