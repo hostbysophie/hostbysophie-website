@@ -211,32 +211,33 @@
   scroll.addEventListener('wheel',function(e){ if(Math.abs(e.deltaY)>=Math.abs(e.deltaX)){ var step=Math.max(1,Math.round(curDays*0.12)); viewStart=addDays(viewStart,(e.deltaY>0?step:-step)); clampView(); build(); e.preventDefault(); } },{passive:false});
 
   // ── Touch / swipe horizontal scroll (mobile — e.g. Android, where there's no right-click drag) ──
+  // Live re-render as the finger moves (like the wheel handler above), so the
+  // view keeps advancing for as long as the drag continues — not capped to
+  // the width of a single swipe.
   (function(){
-    var touchX=null, touchY=null, dragging=false, baseViewStart=null, colWtouch=1;
+    var lastX=null, lastY=null, active=false, colWtouch=1, carry=0;
     scroll.addEventListener('touchstart',function(e){
       if(e.touches.length!==1) return;
-      touchX=e.touches[0].clientX; touchY=e.touches[0].clientY;
-      dragging=false; baseViewStart=viewStart;
+      lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; active=false; carry=0;
       var W=Math.round(scroll.getBoundingClientRect().width)||scroll.clientWidth||900;
-      colWtouch=Math.max(6,(W-LABEL)/curDays);
+      colWtouch=Math.max(3,(W-LABEL)/curDays);
     },{passive:true});
     scroll.addEventListener('touchmove',function(e){
-      if(touchX===null || e.touches.length!==1) return;
-      var dx=e.touches[0].clientX-touchX, dy=e.touches[0].clientY-touchY;
-      if(!dragging){ if(Math.abs(dx)<8) return; if(Math.abs(dx)<=Math.abs(dy)) return; dragging=true; }
-      e.preventDefault();
-      var inner=document.getElementById('sc-inner');
-      if(inner) inner.style.transform='translateX('+dx+'px)';
-    },{passive:false});
-    function endTouch(e){
-      if(dragging){
-        var t=(e.changedTouches&&e.changedTouches[0])?e.changedTouches[0]:null;
-        var dx=t?(t.clientX-touchX):0;
-        var dayDelta=Math.round(-dx/colWtouch);
-        viewStart=addDays(baseViewStart,dayDelta); clampView(); build();
+      if(lastX===null || e.touches.length!==1) return;
+      var x=e.touches[0].clientX, y=e.touches[0].clientY;
+      var dx=x-lastX, dy=y-lastY;
+      if(!active){
+        if(Math.abs(dx)<6 && Math.abs(dy)<6) return;
+        if(Math.abs(dx)<=Math.abs(dy)) return; // vertical gesture: let the page scroll normally
+        active=true;
       }
-      touchX=null; touchY=null; dragging=false;
-    }
+      e.preventDefault();
+      lastX=x; lastY=y;
+      carry+=dx;
+      var step=Math.trunc(-carry/colWtouch);
+      if(step!==0){ carry+=step*colWtouch; viewStart=addDays(viewStart,step); clampView(); build(); }
+    },{passive:false});
+    function endTouch(){ lastX=null; lastY=null; active=false; carry=0; }
     scroll.addEventListener('touchend',endTouch,{passive:true});
     scroll.addEventListener('touchcancel',endTouch,{passive:true});
   })();
