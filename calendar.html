@@ -60,7 +60,7 @@
 
 <div id="sc-legend" style="display:flex; gap:10px; flex-wrap:wrap; padding:8px 16px; background:#FAF5ED; font-size:10.5px; border-top:0.5px solid #F0E6D2;"></div>
 
-<div id="sc-scroll" style="overflow:hidden; border:0.5px solid #E7ECF1; border-top:none; background:#FFFFFF; min-height:120px;">
+<div id="sc-scroll" style="overflow:hidden; border:0.5px solid #E7ECF1; border-top:none; background:#FFFFFF; min-height:120px; touch-action:pan-y;">
   <div id="sc-body" style="padding:16px; color:#6B7B85; font-size:12px;">Loading…</div>
 </div>
 
@@ -137,8 +137,9 @@
         var sc=between(viewStart,d(r.s)), ec=between(viewStart,d(r.e));
         if(ec>0 && sc<curDays){
           var aC=sc*colW+colW/2, dC=ec*colW+colW/2, left=Math.max(0,aC), right=Math.min(trackW,dC), width=right-left; if(width<3)width=3;
-          var isRes=(r.t==='res'), bg=isRes?p.bg:'#B4B2A9', fg=isRes?p.fg:'#2C2C2A', showName=width>=34;
-          bars+='<div class="ev" data-name="'+esc(isRes?(r.n||'Guest'):'Blocked')+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):'Owner / not available'))+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(isRes?(r.n||'Guest'):'Blocked'):'')+'</div>';
+          var isRes=(r.t==='res'), label=(r.n||(isRes?'Guest':'Blocked')), bg=isRes?p.bg:'#B4B2A9', fg=isRes?p.fg:'#2C2C2A', showName=width>=34;
+          var metaTxt=p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):('Owner / not available'+(r.n?' (name from notes)':'')))+(r.note?(' — '+r.note):'');
+          bars+='<div class="ev" data-name="'+esc(label)+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(metaTxt)+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(label):'')+'</div>';
         }
       });
       var rowbg=(pi%2===0)?'#FFFFFF':'#FBFCFD';
@@ -208,6 +209,37 @@
   document.getElementById('sc-in').addEventListener('click',function(){ zoom(-1); });
   document.getElementById('sc-out').addEventListener('click',function(){ zoom(1); });
   scroll.addEventListener('wheel',function(e){ if(Math.abs(e.deltaY)>=Math.abs(e.deltaX)){ var step=Math.max(1,Math.round(curDays*0.12)); viewStart=addDays(viewStart,(e.deltaY>0?step:-step)); clampView(); build(); e.preventDefault(); } },{passive:false});
+
+  // ── Touch / swipe horizontal scroll (mobile — e.g. Android, where there's no right-click drag) ──
+  (function(){
+    var touchX=null, touchY=null, dragging=false, baseViewStart=null, colWtouch=1;
+    scroll.addEventListener('touchstart',function(e){
+      if(e.touches.length!==1) return;
+      touchX=e.touches[0].clientX; touchY=e.touches[0].clientY;
+      dragging=false; baseViewStart=viewStart;
+      var W=Math.round(scroll.getBoundingClientRect().width)||scroll.clientWidth||900;
+      colWtouch=Math.max(6,(W-LABEL)/curDays);
+    },{passive:true});
+    scroll.addEventListener('touchmove',function(e){
+      if(touchX===null || e.touches.length!==1) return;
+      var dx=e.touches[0].clientX-touchX, dy=e.touches[0].clientY-touchY;
+      if(!dragging){ if(Math.abs(dx)<8) return; if(Math.abs(dx)<=Math.abs(dy)) return; dragging=true; }
+      e.preventDefault();
+      var inner=document.getElementById('sc-inner');
+      if(inner) inner.style.transform='translateX('+dx+'px)';
+    },{passive:false});
+    function endTouch(e){
+      if(dragging){
+        var t=(e.changedTouches&&e.changedTouches[0])?e.changedTouches[0]:null;
+        var dx=t?(t.clientX-touchX):0;
+        var dayDelta=Math.round(-dx/colWtouch);
+        viewStart=addDays(baseViewStart,dayDelta); clampView(); build();
+      }
+      touchX=null; touchY=null; dragging=false;
+    }
+    scroll.addEventListener('touchend',endTouch,{passive:true});
+    scroll.addEventListener('touchcancel',endTouch,{passive:true});
+  })();
 
   var form=document.getElementById('sc-form'), pform=document.getElementById('sc-pform');
   document.getElementById('sc-add').addEventListener('click',function(){ pform.style.display='none'; form.style.display=(form.style.display==='none'?'block':'none'); });

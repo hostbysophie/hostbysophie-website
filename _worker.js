@@ -500,10 +500,26 @@ function calParseICS(text, pf) {
     };
     const s = calIso(get('DTSTART')), e = calIso(get('DTEND'));
     if (!s || !e) continue;
-    const { t, n } = calClassify(get('SUMMARY'));
-    out.push({ s, e, n, t, pf });
+    const description = calUnescapeICS(get('DESCRIPTION'));
+    const { t, n } = calClassify(get('SUMMARY'), description);
+    const ev = { s, e, n, t, pf };
+    // Owner/Tab blocks often carry the actual guest name only in the iCal
+    // notes (DESCRIPTION), not the summary — keep a trimmed copy so the
+    // calendar can surface it instead of a bare "Blocked".
+    if (description) ev.note = description.slice(0, 160);
+    out.push(ev);
   }
   return out;
+}
+
+// Unescape iCal TEXT value escaping (RFC 5545): \n \, \; \\
+function calUnescapeICS(v) {
+  return (v || '')
+    .replace(/\\n/gi, ' ')
+    .replace(/\\,/g, ',')
+    .replace(/\\;/g, ';')
+    .replace(/\\\\/g, '\\')
+    .trim();
 }
 
 function calIso(v) {
@@ -511,9 +527,22 @@ function calIso(v) {
   return m ? (m[1] + '-' + m[2] + '-' + m[3]) : '';
 }
 
-function calClassify(summary) {
+function calClassify(summary, description) {
   const s = (summary || '').toLowerCase();
-  if (/not available|unavailable|blocked|closed|owner|maintenance/.test(s)) return { t: 'block', n: '' };
+  if (/not available|unavailable|blocked|closed|owner|maintenance/.test(s)) {
+    // A block usually carries no guest info — but owner blocks and blocks
+    // synced from Tab sometimes tuck the guest's name after the standard
+    // boilerplate in the summary, or in the DESCRIPTION notes. Recover it
+    // when we can, so the calendar shows a name instead of a bare "Blocked".
+    let n = '';
+    const m1 = (summary || '').match(/(?:not available|unavailable|blocked|closed|owner)\s*[-–—:]\s*(.+)/i);
+    if (m1 && m1[1].trim()) n = m1[1].trim();
+    if (!n && description) {
+      const m2 = description.match(/(?:guest|name|reserved by|booked by)\s*[:\-]\s*([^,;\n]+)/i);
+      if (m2 && m2[1].trim()) n = m2[1].trim();
+    }
+    return { t: 'block', n };
+  }
   let n = '';
   const m = summary.match(/reserved\s*[-–—:]\s*(.+)/i);
   if (m) n = m[1].trim();
