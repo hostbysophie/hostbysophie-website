@@ -66,7 +66,7 @@
     <button class="topbar-btn" onclick="document.getElementById('newsletterModal').classList.add('open'); document.body.style.overflow='hidden'">
       Subscribe Free →
     </button>
-    <button class="topbar-close" onclick="document.getElementById('topbarNewsletter').style.display='none'; document.querySelector('.nav').style.top='0'" aria-label="Close">✕</button>
+    <button class="topbar-close" onclick="closeTopbarNewsletter(this)" aria-label="Close">✕</button>
   </div>
 
   <!-- ============================== NAV ============================== -->
@@ -670,6 +670,7 @@
 
       <div class="reviews-cta">
         <a href="https://www.google.com/maps/place/HOST+BY+SOPHIE/@12.5172366,-69.9620747,17z/data=!3m1!1e3!4m6!3m5!1s0x676f4426bf5555ff:0x4c61a5cbb18e386!8m2!3d12.5172366!4d-69.9620747!16s%2Fg%2F11myzm7gbp" target="_blank" rel="noopener" class="btn btn-primary">View all reviews on Google</a>
+        <a href="https://share.google/e2593P8dnw9nmS7Zl" target="_blank" rel="noopener" class="btn btn-gold" style="margin-left:12px;">Leave us a review</a>
         <div class="google-badge">
           <svg width="16" height="16" viewBox="0 0 74 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.24 8.19v2.46h5.88c-.18 1.38-.64 2.39-1.34 3.1-.86.86-2.2 1.8-4.54 1.8-3.62 0-6.45-2.92-6.45-6.54s2.83-6.54 6.45-6.54c1.95 0 3.38.77 4.43 1.76L15.4 2.5C13.94 1.08 11.98 0 9.24 0 4.28 0 .11 4.04.11 9s4.17 9 9.13 9c2.68 0 4.7-.88 6.28-2.52 1.62-1.62 2.13-3.91 2.13-5.75 0-.57-.04-1.1-.13-1.54H9.24z" fill="#4285F4"/><path d="M25 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52s1.52-3.52 3.28-3.52 3.28 1.46 3.28 3.52-1.52 3.52-3.28 3.52z" fill="#EA4335"/></svg>
           Verified on Google
@@ -844,6 +845,24 @@
 
   <!-- ============================== JS ============================== -->
   <script>
+    // Keep --topbar-h in sync with the real newsletter banner height.
+    // Fixes: on narrow screens (Android/mobile) the banner text wraps to 2-3
+    // lines and grows taller than the old hardcoded 44px, which pushed the
+    // fixed nav + hero content underneath it, hiding content below the fold.
+    function syncTopbarHeight() {
+      const topbar = document.getElementById('topbarNewsletter');
+      const h = (topbar && topbar.style.display !== 'none') ? topbar.offsetHeight : 0;
+      document.documentElement.style.setProperty('--topbar-h', h + 'px');
+    }
+    function closeTopbarNewsletter(btn) {
+      document.getElementById('topbarNewsletter').style.display = 'none';
+      syncTopbarHeight();
+    }
+    window.addEventListener('load', syncTopbarHeight);
+    window.addEventListener('resize', syncTopbarHeight);
+    window.addEventListener('orientationchange', syncTopbarHeight);
+    syncTopbarHeight();
+
     // Simple reveal-on-scroll
     const io = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
