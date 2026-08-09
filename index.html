@@ -550,13 +550,13 @@
         <p>Real experiences shared on Google by property owners and travelers who experienced the Host By Sophie difference.</p>
         <div class="google-rating-bar">
           <svg class="google-logo" viewBox="0 0 74 24" xmlns="http://www.w3.org/2000/svg" aria-label="Google"><path d="M9.24 8.19v2.46h5.88c-.18 1.38-.64 2.39-1.34 3.1-.86.86-2.2 1.8-4.54 1.8-3.62 0-6.45-2.92-6.45-6.54s2.83-6.54 6.45-6.54c1.95 0 3.38.77 4.43 1.76L15.4 2.5C13.94 1.08 11.98 0 9.24 0 4.28 0 .11 4.04.11 9s4.17 9 9.13 9c2.68 0 4.7-.88 6.28-2.52 1.62-1.62 2.13-3.91 2.13-5.75 0-.57-.04-1.1-.13-1.54H9.24z" fill="#4285F4"/><path d="M25 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52s1.52-3.52 3.28-3.52 3.28 1.46 3.28 3.52-1.52 3.52-3.28 3.52z" fill="#EA4335"/><path d="M53.58 7.49h-.09c-.57-.68-1.67-1.3-3.06-1.3C47.53 6.19 45 8.72 45 12c0 3.25 2.53 5.81 5.43 5.81 1.39 0 2.49-.61 3.06-1.32h.09v.81c0 2.22-1.19 3.41-3.1 3.41-1.56 0-2.53-1.12-2.93-2.07l-2.22.92c.64 1.54 2.33 3.43 5.15 3.43 2.99 0 5.52-1.76 5.52-6.05V6.49h-2.42v1zm-2.93 7.03c-1.76 0-3.1-1.5-3.1-3.52s1.34-3.52 3.1-3.52c1.74 0 3.1 1.53 3.1 3.54.01 2.01-1.36 3.5-3.1 3.5z" fill="#4285F4"/><path d="M38 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52S36.24 8.48 38 8.48s3.28 1.46 3.28 3.52-1.52 3.52-3.28 3.52z" fill="#FBBC05"/><path d="M58 .24h2.51v17.57H58z" fill="#34A853"/><path d="M63.41 11.76c-.06-2.22 1.72-5.57 5.28-5.57 3.14 0 4.93 2.1 4.93 5.81l-7.45 3.08c.57 1.12 1.46 1.7 2.7 1.7 1.24 0 2.1-.61 2.73-1.54l1.94 1.29c-.63.93-2.14 2.28-4.67 2.28-3.37 0-5.46-2.58-5.46-5.05zm2.55-1.07l4.98-2.07c-.27-.69-1.09-1.17-2.05-1.17-1.23 0-2.94 1.09-2.93 3.24z" fill="#EA4335"/></svg>
-          <div class="rating-score">5.0</div>
-          <div class="rating-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-          <div class="rating-count">&#183; 15 Google Reviews</div>
+          <div class="rating-score" id="ratingScore">5.0</div>
+          <div class="rating-stars" id="ratingStars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+          <div class="rating-count">&#183; <span id="ratingCount">17</span> Google Reviews</div>
         </div>
       </div>
 
-      <div class="reviews-grid">
+      <div class="reviews-grid" id="reviewsGrid">
 
         <div class="review-card reveal">
           <div class="reviewer-row">
@@ -670,7 +670,7 @@
 
       <div class="reviews-cta">
         <a href="https://www.google.com/maps/place/HOST+BY+SOPHIE/@12.5172366,-69.9620747,17z/data=!3m1!1e3!4m6!3m5!1s0x676f4426bf5555ff:0x4c61a5cbb18e386!8m2!3d12.5172366!4d-69.9620747!16s%2Fg%2F11myzm7gbp" target="_blank" rel="noopener" class="btn btn-primary">View all reviews on Google</a>
-        <a href="https://share.google/e2593P8dnw9nmS7Zl" target="_blank" rel="noopener" class="btn btn-gold" style="margin-left:12px;">Leave us a review</a>
+        <a href="https://search.google.com/local/writereview?placeid=ChIJ_1VVvyZEb2cRhuMYu1waxgQ" target="_blank" rel="noopener" class="btn btn-gold" style="margin-left:12px;">Leave us a review</a>
         <div class="google-badge">
           <svg width="16" height="16" viewBox="0 0 74 24" xmlns="http://www.w3.org/2000/svg"><path d="M9.24 8.19v2.46h5.88c-.18 1.38-.64 2.39-1.34 3.1-.86.86-2.2 1.8-4.54 1.8-3.62 0-6.45-2.92-6.45-6.54s2.83-6.54 6.45-6.54c1.95 0 3.38.77 4.43 1.76L15.4 2.5C13.94 1.08 11.98 0 9.24 0 4.28 0 .11 4.04.11 9s4.17 9 9.13 9c2.68 0 4.7-.88 6.28-2.52 1.62-1.62 2.13-3.91 2.13-5.75 0-.57-.04-1.1-.13-1.54H9.24z" fill="#4285F4"/><path d="M25 6.19c-3.21 0-5.83 2.44-5.83 5.81 0 3.34 2.62 5.81 5.83 5.81s5.83-2.46 5.83-5.81c0-3.37-2.62-5.81-5.83-5.81zm0 9.33c-1.76 0-3.28-1.45-3.28-3.52s1.52-3.52 3.28-3.52 3.28 1.46 3.28 3.52-1.52 3.52-3.28 3.52z" fill="#EA4335"/></svg>
           Verified on Google
@@ -845,6 +845,49 @@
 
   <!-- ============================== JS ============================== -->
   <script>
+    // Live Google Reviews — fetches /google-reviews (Cloudflare Function) and
+    // replaces the static fallback cards below with the 5 most recent real
+    // reviews. If the fetch fails for any reason, the static cards already
+    // in the HTML stay untouched, so the section never looks broken.
+    const AVATAR_COLORS = ['#6B4FA0', '#1A4A6B', '#E8711A', '#34A853', '#6B6878', '#E91E8C', '#EA4335', '#4285F4', '#8D6748'];
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+    function initials(name) {
+      return (name || '?').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+    }
+    async function loadLiveReviews() {
+      try {
+        const res = await fetch('/google-reviews');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.error || !Array.isArray(data.reviews) || !data.reviews.length) return;
+
+        if (data.rating) document.getElementById('ratingScore').textContent = data.rating.toFixed(1);
+        if (data.totalReviews) document.getElementById('ratingCount').textContent = data.totalReviews;
+
+        const grid = document.getElementById('reviewsGrid');
+        grid.innerHTML = data.reviews.slice(0, 5).map((r, i) => `
+          <div class="review-card reveal in">
+            <div class="reviewer-row">
+              <div class="reviewer-avatar" style="background:${AVATAR_COLORS[i % AVATAR_COLORS.length]};">${escapeHtml(initials(r.author))}</div>
+              <div class="reviewer-info">
+                <div class="reviewer-name">${escapeHtml(r.author)}</div>
+                <div class="reviewer-date">${escapeHtml(r.relativeTime || '')}</div>
+              </div>
+            </div>
+            <div class="review-stars">${'&#9733;'.repeat(r.rating || 5)}</div>
+            <p class="review-text">"${escapeHtml(r.text)}"</p>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.warn('Live reviews unavailable, showing static fallback.', err);
+      }
+    }
+    loadLiveReviews();
+
     // Keep --topbar-h in sync with the real newsletter banner height.
     // Fixes: on narrow screens (Android/mobile) the banner text wraps to 2-3
     // lines and grows taller than the old hardcoded 44px, which pushed the
