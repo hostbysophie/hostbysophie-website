@@ -332,6 +332,47 @@ export default {
       }
     }
 
+    // ── Live Google Reviews for HOST BY SOPHIE (Santa Cruz, Aruba) ────────────
+    //   Environment variable required (Cloudflare → Settings → Variables):
+    //     GOOGLE_PLACES_API_KEY  →  restricted to "Places API"
+    //   Edge-cached 1h so the Places API is called only a handful of times/hour.
+    if (url.pathname === '/google-reviews') {
+      try {
+        if (!env.GOOGLE_PLACES_API_KEY) return jsonError('Missing GOOGLE_PLACES_API_KEY', 500);
+        const placeId = 'ChIJ_1VVvyZEb2cRhuMYu1waxgQ'; // HOST BY SOPHIE
+        const apiUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,user_ratings_total,reviews&key=${env.GOOGLE_PLACES_API_KEY}`;
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        if (data.status !== 'OK') return jsonError(data.status || 'Google API error', 502);
+
+        const result = data.result || {};
+        const reviews = (result.reviews || [])
+          .sort((a, b) => b.time - a.time)
+          .map(r => ({
+            author: r.author_name,
+            rating: r.rating,
+            text: r.text,
+            relativeTime: r.relative_time_description,
+            time: r.time,
+          }));
+
+        return new Response(JSON.stringify({
+          rating: result.rating,
+          totalReviews: result.user_ratings_total,
+          reviews,
+        }), {
+          status: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'public, max-age=3600, s-maxage=3600',
+            ...corsHeaders(),
+          },
+        });
+      } catch (err) {
+        return jsonError('Server error', 500);
+      }
+    }
+
     // ── All other requests → serve static assets ──────────────────────────────
     return env.ASSETS ? env.ASSETS.fetch(request) : new Response('Not found', { status: 404 });
   },
