@@ -206,6 +206,12 @@ section.alt { background: var(--sand); }
   background: rgba(28,28,46,.55); color: var(--white); font-size: .7rem; font-weight: 600;
   padding: 3px 9px; border-radius: 999px;
 }
+.property-price {
+  position: absolute; bottom: 10px; left: 10px; z-index: 2;
+  background: var(--white); color: var(--ink); font-size: .8rem; font-weight: 700;
+  padding: 5px 12px; border-radius: 999px; box-shadow: var(--shadow);
+}
+.property-price span { font-weight: 500; color: var(--ink-soft); font-size: .68rem; text-transform: uppercase; letter-spacing: .03em; }
 .carousel-arrow {
   position: absolute; top: 50%; transform: translateY(-50%); z-index: 2;
   width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer;
