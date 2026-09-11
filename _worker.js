@@ -493,7 +493,12 @@ async function calGetData(env, force) {
   const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
   const feeds = calFeeds(env);
   const properties = CAL_PROPS.map(p => {
-    const hasFeeds = (feeds[p.name] || []).some(f => f && f.url);
+    // "Live" if either a legacy CAL_FEEDS entry is configured, or the HBS
+    // Sync feed has ever produced an event for this property (flag persists
+    // in the cache even on weeks with zero bookings, so it never reverts to
+    // the static seed once real data has arrived).
+    const hasFeeds = (feeds[p.name] || []).some(f => f && f.url) ||
+      !!(cache.syncedProps && cache.syncedProps[p.name]);
     const events = (hasFeeds ? ((cache.byProp && cache.byProp[p.name]) || []) : (p.seed || [])).slice();
     manual.bookings.filter(b => b.prop === p.name)
       .forEach(b => calMergeManual(events, b));
@@ -523,7 +528,42 @@ async function calRefresh(env) {
     }
     byProp[p.name] = calDedupe(evs);
   }
-  const data = { byProp, updated: Date.now() };
+
+  // ── HBS Sync feed: Gmail → cloud routine → Google Calendar "HBS Sync" ────
+  // One shared iCal feed covering every property (multiplexed via SUMMARY
+  // "PROPERTY | Guest | Platform"), used because the cloud routine that reads
+  // Gmail can no longer reach hostbysophie.com directly. The feed URL lives
+  // in the Cloudflare secret HBS_SYNC_ICAL_URL — never committed to git.
+  // Rebuilt from scratch every run like the feeds above, so a cancelled
+  // booking (removed from the feed) simply stops appearing — no separate
+  // deletion bookkeeping needed.
+  let previousCache = null;
+  try { previousCache = await env.HBS_CAL.get('feeds', 'json'); } catch (e) { /* ignore */ }
+  const syncedProps = { ...(previousCache && previousCache.syncedProps) };
+
+  if (env.HBS_SYNC_ICAL_URL) {
+    try {
+      const r = await fetch(env.HBS_SYNC_ICAL_URL, { headers: { 'User-Agent': 'HBS-Calendar/1.0' } });
+      if (r.ok) {
+        const syncEvents = calParseHbsSyncICS(await r.text());
+        const byPropSync = {};
+        for (const ev of syncEvents) {
+          (byPropSync[ev.prop] || (byPropSync[ev.prop] = [])).push(ev);
+        }
+        for (const propName of Object.keys(byPropSync)) {
+          syncedProps[propName] = true;
+          if (!byProp[propName]) byProp[propName] = [];
+          for (const ev of byPropSync[propName]) {
+            calMergeSyncEvent(byProp[propName], ev);
+          }
+        }
+      } else {
+        console.warn('HBS Sync: feed fetch failed, status', r.status);
+      }
+    } catch (e) { console.warn('HBS Sync: feed error', e); }
+  }
+
+  const data = { byProp, updated: Date.now(), syncedProps };
   await env.HBS_CAL.put('feeds', JSON.stringify(data));
   return data;
 }
@@ -551,6 +591,73 @@ function calParseICS(text, pf) {
     out.push(ev);
   }
   return out;
+}
+
+// Parse the shared HBS Sync feed. Each VEVENT's SUMMARY is
+// "PROPERTY | Guest name | Platform" (pipe-separated, exact property name,
+// no fuzzy matching — the routine that writes these events already resolved
+// the mapping). Anything that doesn't fit is skipped and logged, never guessed.
+function calParseHbsSyncICS(text) {
+  const out = [];
+  if (!text) return out;
+  text = text.replace(/\r\n/g, '\n').replace(/\n[ \t]/g, ''); // unfold folded lines
+  const validProps = CAL_PROPS.map(p => p.name);
+  const blocks = text.split('BEGIN:VEVENT').slice(1);
+  for (const b of blocks) {
+    const body = b.split('END:VEVENT')[0];
+    const get = (k) => {
+      const m = body.match(new RegExp('\\n' + k + '[^:\\n]*:([^\\n]*)'));
+      return m ? m[1].trim() : '';
+    };
+    const summary = get('SUMMARY');
+    const parts = summary.split('|').map(s => s.trim());
+    if (parts.length < 3) {
+      console.warn('HBS Sync: summary has fewer than 3 fields, skipped:', summary);
+      continue;
+    }
+    const [propRaw, guestRaw, platformRaw] = parts;
+    if (!validProps.includes(propRaw)) {
+      console.warn('HBS Sync: unrecognised property, skipped:', propRaw);
+      continue;
+    }
+    const s = calIso(get('DTSTART')), e = calIso(get('DTEND'));
+    if (!s || !e) {
+      console.warn('HBS Sync: missing/unparseable dates, skipped:', summary);
+      continue;
+    }
+    const pf = ['Airbnb', 'Booking', 'VRBO', 'Direct'].includes(platformRaw) ? platformRaw : 'Direct';
+    out.push({ uid: get('UID'), prop: propRaw, s, e, n: guestRaw, pf, t: 'res', note: calSyncNote(get('DESCRIPTION')) });
+  }
+  return out;
+}
+
+// Pull only the "note:" line out of an HBS Sync DESCRIPTION (line-based
+// "key: value", one per RFC5545-escaped newline). Unrecognised keys (e.g.
+// "source:") are ignored on purpose, so the format stays extensible.
+function calSyncNote(description) {
+  if (!description) return '';
+  for (const raw of description.split(/\\n/)) {
+    const line = raw.replace(/\\,/g, ',').replace(/\\;/g, ';').replace(/\\\\/g, '\\').trim();
+    const m = line.match(/^note:\s*(.*)$/i);
+    if (m) return m[1].trim();
+  }
+  return '';
+}
+
+// Merge one HBS-Sync-sourced booking into a property's live event list.
+// If a platform-feed entry already covers the exact same date range with a
+// blank/generic guest name, enrich it in place (name/platform/note) instead
+// of stacking a duplicate bar — same behaviour as calMergeManual() below.
+function calMergeSyncEvent(events, ev) {
+  const match = events.find(e => e.s === ev.s && e.e === ev.e && e.t === 'res' && !e.n);
+  if (match) {
+    match.n = ev.n;
+    match.pf = ev.pf;
+    if (ev.note) match.note = ev.note;
+    match.uid = ev.uid;
+  } else {
+    events.push(ev);
+  }
 }
 
 // Unescape iCal TEXT value escaping (RFC 5545): \n \, \; \\
