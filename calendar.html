@@ -72,6 +72,22 @@
   <div id="sc-tip-meta" style="font-size:12px; color:#1C2B36; margin-top:6px;">&mdash;</div>
 </div>
 
+<div id="sc-detail" style="display:none; position:fixed; inset:0; z-index:100; background:rgba(20,30,40,0.45); align-items:center; justify-content:center;">
+  <div style="background:#FFFFFF; border-radius:8px; padding:18px 20px; width:280px; max-width:90vw; box-shadow:0 8px 24px rgba(0,0,0,0.25); font-family:Arial,Helvetica,sans-serif;">
+    <div id="d-title" style="font-weight:bold; color:#1A3A5C; font-size:15px;">&mdash;</div>
+    <div id="d-dates" style="font-size:11px; color:#6B7B85; margin-top:2px;">&mdash;</div>
+    <div id="d-meta" style="font-size:12px; color:#1C2B36; margin-top:6px; margin-bottom:10px;">&mdash;</div>
+    <label style="font-size:11px; color:#1C2B36; display:block; margin-bottom:4px;">Note</label>
+    <textarea id="d-note" rows="3" maxlength="300" style="width:100%; box-sizing:border-box; padding:6px; border:0.5px solid #C9D2DA; border-radius:4px; font-size:12px; font-family:Arial,Helvetica,sans-serif; resize:vertical;"></textarea>
+    <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+      <button id="d-savenote" style="border:0.5px solid #1A3A5C; background:#1A3A5C; color:#FFF; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:12px;">Save note</button>
+      <button id="d-delete" style="border:0.5px solid #B23B3B; background:#FFF; color:#B23B3B; border-radius:4px; padding:6px 12px; cursor:pointer; font-size:12px;">Delete booking</button>
+      <button id="d-close" style="border:0.5px solid #C9D2DA; background:#FFF; color:#1A3A5C; border-radius:4px; padding:6px 10px; cursor:pointer; font-size:12px;">Close</button>
+    </div>
+    <div id="d-msg" style="font-size:11px; margin-top:6px;">&nbsp;</div>
+  </div>
+</div>
+
 <script>
 (function(){
   var LABEL=132, monthsVisible=2, curDays=61;
@@ -139,7 +155,8 @@
           var aC=sc*colW+colW/2, dC=ec*colW+colW/2, left=Math.max(0,aC), right=Math.min(trackW,dC), width=right-left; if(width<3)width=3;
           var isRes=(r.t==='res'), label=(r.n||(isRes?'Guest':'Blocked')), bg=isRes?p.bg:'#B4B2A9', fg=isRes?p.fg:'#2C2C2A', showName=width>=34;
           var metaTxt=p.name+' - '+(isRes?((r.pf||'VRBO')+' - Reserved'):('Owner / not available'+(r.n?' (name from notes)':'')))+(r.note?(' — '+r.note):'');
-          bars+='<div class="ev" data-name="'+esc(label)+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(metaTxt)+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(label):'')+'</div>';
+          var bkId=r.manualId||r.id||'';
+          bars+='<div class="ev" data-name="'+esc(label)+'" data-dates="'+esc(fmt(d(r.s))+' -> '+fmt(d(r.e)))+'" data-meta="'+esc(metaTxt)+'" data-prop="'+esc(p.name)+'" data-s="'+esc(r.s)+'" data-e="'+esc(r.e)+'" data-n="'+esc(r.n||'')+'" data-pf="'+esc(r.pf||'')+'" data-id="'+esc(bkId)+'" data-note="'+esc(r.note||'')+'" data-type="'+esc(r.t||'res')+'" style="position:absolute;left:'+left+'px;width:'+width+'px;top:5px;height:20px;box-sizing:border-box;background:'+bg+';color:'+fg+';border-radius:4px;padding:0 '+(showName?5:0)+'px;font-size:10px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;text-align:'+(showName?'left':'center')+';'+(isRes?'':'font-style:italic;')+'">'+(showName?esc(label):'')+'</div>';
         }
       });
       var rowbg=(pi%2===0)?'#FFFFFF':'#FBFCFD';
@@ -182,7 +199,7 @@
     inner.addEventListener('mouseleave',function(){ setCol(-1); });
   }
 
-  function attach(){ wrap.querySelectorAll('.ev').forEach(function(b){ b.addEventListener('mouseenter',function(){show(b);}); b.addEventListener('mouseleave',scheduleHide); }); }
+  function attach(){ wrap.querySelectorAll('.ev').forEach(function(b){ b.addEventListener('mouseenter',function(){show(b);}); b.addEventListener('mouseleave',scheduleHide); b.addEventListener('click',function(){openDetail(b);}); }); }
   function show(bar){
     clearTimeout(hideT);
     document.getElementById('sc-tip-name').textContent=bar.dataset.name;
@@ -197,6 +214,47 @@
   function scheduleHide(){hideT=setTimeout(function(){tip.style.display='none';},200);}
   tip.addEventListener('mouseenter',function(){clearTimeout(hideT);});
   tip.addEventListener('mouseleave',scheduleHide);
+
+  // ── Booking detail modal: delete a booking directly, or add/edit its note ──
+  var detail=document.getElementById('sc-detail');
+  var curBooking=null;
+  function closeDetail(){ detail.style.display='none'; curBooking=null; }
+  function openDetail(bar){
+    clearTimeout(hideT); tip.style.display='none';
+    curBooking={ prop:bar.dataset.prop, s:bar.dataset.s, e:bar.dataset.e, n:bar.dataset.n, pf:bar.dataset.pf, id:bar.dataset.id, t:bar.dataset.type };
+    document.getElementById('d-title').textContent=bar.dataset.name;
+    document.getElementById('d-dates').textContent=bar.dataset.dates;
+    document.getElementById('d-meta').textContent=bar.dataset.meta;
+    document.getElementById('d-note').value=bar.dataset.note||'';
+    var m=document.getElementById('d-msg'); m.style.color='#6B7B85'; m.innerHTML='&nbsp;';
+    detail.style.display='flex';
+  }
+  detail.addEventListener('click',function(e){ if(e.target===detail) closeDetail(); });
+  document.getElementById('d-close').addEventListener('click',closeDetail);
+  document.getElementById('d-savenote').addEventListener('click',function(){
+    if(!curBooking) return;
+    var note=document.getElementById('d-note').value.trim();
+    var msg=document.getElementById('d-msg'); msg.style.color='#6B7B85'; msg.textContent='Saving…';
+    post({action:'note', prop:curBooking.prop, s:curBooking.s, e:curBooking.e, note:note}, function(data){
+      if(!data){ msg.style.color='#993535'; msg.textContent='Network error'; return; }
+      if(data.error){ msg.style.color='#993535'; msg.textContent=data.error; return; }
+      msg.style.color='#2E7D4F'; msg.textContent='Note saved.'; apply(data);
+    });
+  });
+  document.getElementById('d-delete').addEventListener('click',function(){
+    if(!curBooking) return;
+    if(!window.confirm('Delete this booking'+(curBooking.n?(' for '+curBooking.n):'')+'?')) return;
+    var msg=document.getElementById('d-msg'); msg.style.color='#6B7B85'; msg.textContent='Deleting…';
+    post({action:'cancel', id:curBooking.id, prop:curBooking.prop, s:curBooking.s, e:curBooking.e, n:curBooking.n}, function(data){
+      if(!data){ msg.style.color='#993535'; msg.textContent='Network error'; return; }
+      if(data.error){
+        msg.style.color='#993535';
+        msg.textContent=(data.error==='Booking not found'?'Not a manual entry yet — add a note instead, or edit it on the source platform (Airbnb/VRBO/Booking).':data.error);
+        return;
+      }
+      closeDetail(); apply(data);
+    });
+  });
 
   if(window.ResizeObserver){ var rw=0; new ResizeObserver(function(){ var w=scroll.getBoundingClientRect().width; if(Math.abs(w-rw)>6){ rw=w; build(); } }).observe(scroll); }
 
