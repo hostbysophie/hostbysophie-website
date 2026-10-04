@@ -19,6 +19,11 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    // ── Owner portal API (server-side auth, per-owner data) ──────────────────
+    if (url.pathname.startsWith('/portal-api/')) {
+      return portalHandle(request, env, url);
+    }
+
     // ── Proxy for HBS Meeting app: relay summary requests to AssemblyAI ──────
     // (their LLM Gateway blocks direct browser calls; same-origin proxy fixes it)
     if (url.pathname === '/meeting-summary') {
@@ -263,13 +268,13 @@ export default {
 
       try {
         if (request.method === 'GET') {
-          return calJson(await calGetData(env, false), 200);
+          return calJson(calStripFin(await calGetData(env, false)), 200);
         }
         if (request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
           const action = body.action || '';
           if (action === 'refresh') {
-            return calJson(await calGetData(env, true), 200);
+            return calJson(calStripFin(await calGetData(env, true)), 200);
           }
           if (action === 'booking') {
             const b = calCleanBooking(body);
@@ -277,7 +282,7 @@ export default {
             const manual = (await env.HBS_CAL.get('manual', 'json')) || { bookings: [], apartments: [] };
             manual.bookings.push(b);
             await env.HBS_CAL.put('manual', JSON.stringify(manual));
-            return calJson(await calGetData(env, false), 200);
+            return calJson(calStripFin(await calGetData(env, false)), 200);
           }
           if (action === 'cancel') {
             const id = String(body.id || '').trim();
@@ -295,7 +300,7 @@ export default {
             }
             if (manual.bookings.length === before) return calJson({ error: 'Booking not found' }, 404);
             await env.HBS_CAL.put('manual', JSON.stringify(manual));
-            return calJson(await calGetData(env, false), 200);
+            return calJson(calStripFin(await calGetData(env, false)), 200);
           }
           if (action === 'note') {
             const prop = String(body.prop || '').trim();
@@ -310,7 +315,7 @@ export default {
               manual.bookings.push({ id: crypto.randomUUID(), prop, s, e, n: '', t: 'note-only', pf: 'Direct', note, manual: true });
             }
             await env.HBS_CAL.put('manual', JSON.stringify(manual));
-            return calJson(await calGetData(env, false), 200);
+            return calJson(calStripFin(await calGetData(env, false)), 200);
           }
           if (action === 'apartment') {
             const name = String(body.name || '').trim();
@@ -322,7 +327,7 @@ export default {
               manual.apartments.push({ name, bg, fg: calFg(bg) });
               await env.HBS_CAL.put('manual', JSON.stringify(manual));
             }
-            return calJson(await calGetData(env, false), 200);
+            return calJson(calStripFin(await calGetData(env, false)), 200);
           }
           return calJson({ error: 'Unknown action' }, 400);
         }
@@ -626,7 +631,10 @@ function calParseHbsSyncICS(text) {
       continue;
     }
     const pf = ['Airbnb', 'Booking', 'VRBO', 'Direct'].includes(platformRaw) ? platformRaw : 'Direct';
-    out.push({ uid: get('UID'), prop: propRaw, s, e, n: guestRaw, pf, t: 'res', note: calSyncNote(get('DESCRIPTION')) });
+    const ev = { uid: get('UID'), prop: propRaw, s, e, n: guestRaw, pf, t: 'res', note: calSyncNote(get('DESCRIPTION')) };
+    const fin = calSyncFin(get('DESCRIPTION'));
+    if (fin) ev.fin = fin;
+    out.push(ev);
   }
   return out;
 }
@@ -649,11 +657,14 @@ function calSyncNote(description) {
 // blank/generic guest name, enrich it in place (name/platform/note) instead
 // of stacking a duplicate bar — same behaviour as calMergeManual() below.
 function calMergeSyncEvent(events, ev) {
-  const match = events.find(e => e.s === ev.s && e.e === ev.e && e.t === 'res' && !e.n);
+  // Same property + exact same dates = same stay (platform iCal copy). Enrich it.
+  const match = events.find(e => e.s === ev.s && e.e === ev.e && (e.t === 'res' || (ev.fin && !e.n)));
   if (match) {
-    match.n = ev.n;
+    match.t = 'res';
+    if (ev.n) match.n = ev.n;
     match.pf = ev.pf;
     if (ev.note) match.note = ev.note;
+    if (ev.fin) match.fin = ev.fin;
     match.uid = ev.uid;
   } else {
     events.push(ev);
@@ -759,4 +770,232 @@ function calJson(obj, status) {
     status,
     headers: { 'Content-Type': 'application/json', ...calCors() },
   });
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Owner portal — /portal-api/*
+// ══════════════════════════════════════════════════════════════════════════
+// Security model
+//   • No password or owner data ships in portal.html. Login is checked here.
+//   • Password hashes (PBKDF2-SHA256) live in the Cloudflare secret
+//     PORTAL_USERS = {"email":"pbkdf2$<iter>$<salt b64>$<hash b64>", ...}
+//   • Sessions are an HMAC-signed, HttpOnly cookie (secret PORTAL_SECRET).
+//   • Each owner only ever receives the bookings of their own property.
+//   • Failed logins are throttled per IP (KV HBS_CAL, 15 min window).
+// Booking prices come from the HBS Sync feed (DESCRIPTION "price:" / "fee:"
+// lines written by the daily calendar routine) and are only exposed here,
+// never through the public /calendar-data endpoint.
+
+const PORTAL_COOKIE = 'hbs_portal';
+const PORTAL_SESSION_DAYS = 7;
+const PORTAL_MAX_FAILS = 8;
+const PORTAL_HBS_RATE = 0.15; // HBS commission, on rent excluding cleaning
+
+// Platform commission used when the exact fee is not known
+const PORTAL_PLATFORM_RATE = { Airbnb: 0.155, VRBO: 0.16, Booking: 0.17, Direct: 0 };
+
+// Properties shown in the portal. cleaning = cleaning fee charged per stay (USD)
+const PORTAL_PROPS = {
+  'SWEET CHALET': { label: 'Sweet Chalet — San Fuego 28R', cleaning: 75 },
+  'BUBALI 13 L':  { label: 'Bubali 13L',                   cleaning: 80 },
+  'SOLARA SUITE': { label: 'Solara Suite',                 cleaning: 80 },
+};
+
+// Accounts (no secrets here — passwords are in PORTAL_USERS)
+const PORTAL_ACCOUNTS = {
+  'hostbysophie@gmail.com':       { name: 'Sophie',   props: 'ALL' },
+  'sguenegou@gmail.com':          { name: 'Stéphane', props: ['SWEET CHALET'] },
+  'richicarrental@gmail.com':     { name: 'Richi',    props: ['BUBALI 13 L'] },
+  'ivettelara_mx@yahoo.com.mx':   { name: 'Ivette & Jérôme', props: ['SOLARA SUITE'] },
+  'jerome.luciani@hilton.com':    { name: 'Ivette & Jérôme', props: ['SOLARA SUITE'] },
+};
+
+// Promotions & extras shown under the bookings table (hidden when empty).
+// { label: 'Early check-in', value: '+$40 · 100% to owner' }
+const PORTAL_EXTRAS = {
+  'SWEET CHALET': [],
+  'BUBALI 13 L':  [],
+  'SOLARA SUITE': [],
+};
+
+async function portalHandle(request, env, url) {
+  const path = url.pathname.replace('/portal-api/', '');
+  try {
+    if (!env.PORTAL_SECRET || !env.PORTAL_USERS) return portalJson({ error: 'Portal not configured' }, 503);
+
+    if (path === 'login') {
+      if (request.method !== 'POST') return portalJson({ error: 'Method not allowed' }, 405);
+      const origin = request.headers.get('Origin');
+      if (origin && origin !== url.origin) return portalJson({ error: 'Forbidden' }, 403);
+
+      const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+      const failKey = 'plf:' + ip;
+      const fails = env.HBS_CAL ? parseInt((await env.HBS_CAL.get(failKey)) || '0', 10) : 0;
+      if (fails >= PORTAL_MAX_FAILS) return portalJson({ error: 'Too many attempts. Please try again in 15 minutes.' }, 429);
+
+      const body = await request.json().catch(() => ({}));
+      const email = String(body.email || '').trim().toLowerCase();
+      const password = String(body.password || '');
+      let users = {};
+      try { users = JSON.parse(env.PORTAL_USERS); } catch (e) { /* misconfigured */ }
+
+      const ok = !!PORTAL_ACCOUNTS[email] && !!users[email] && password.length > 0 &&
+                 await portalVerifyPassword(password, users[email]);
+      if (!ok) {
+        if (env.HBS_CAL) await env.HBS_CAL.put(failKey, String(fails + 1), { expirationTtl: 900 });
+        return portalJson({ error: 'Incorrect email or password.' }, 401);
+      }
+      const exp = Date.now() + PORTAL_SESSION_DAYS * 86400000;
+      const token = await portalSign(env, { u: email, exp });
+      return portalJson({ ok: true }, 200, {
+        'Set-Cookie': `${PORTAL_COOKIE}=${token}; Path=/; Max-Age=${PORTAL_SESSION_DAYS * 86400}; HttpOnly; Secure; SameSite=Strict`,
+      });
+    }
+
+    if (path === 'logout') {
+      return portalJson({ ok: true }, 200, {
+        'Set-Cookie': `${PORTAL_COOKIE}=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Strict`,
+      });
+    }
+
+    // Everything below requires a valid session
+    const session = await portalSession(request, env);
+    if (!session) return portalJson({ error: 'Not signed in' }, 401);
+    const account = PORTAL_ACCOUNTS[session.u];
+    if (!account) return portalJson({ error: 'Not signed in' }, 401);
+
+    if (path === 'me' && request.method === 'GET') {
+      const allowed = account.props === 'ALL' ? Object.keys(PORTAL_PROPS) : account.props;
+      const data = env.HBS_CAL ? await calGetData(env, false) : { properties: [] };
+      const today = new Date().toISOString().slice(0, 10);
+      const properties = allowed.map(name => {
+        const cfg = PORTAL_PROPS[name] || { label: name, cleaning: 0 };
+        const p = (data.properties || []).find(x => x.name === name) || { events: [] };
+        const bookings = (p.events || [])
+          .filter(ev => ev.t === 'res' && ev.e > today)
+          .sort((a, b) => (a.s < b.s ? -1 : 1))
+          .map(ev => portalBooking(ev, cfg));
+        return {
+          name, label: cfg.label, color: p.bg || '#1A4A6B',
+          bookings,
+          extras: (PORTAL_EXTRAS[name] || []).filter(x => x && x.label),
+        };
+      });
+      return portalJson({ name: account.name, email: session.u, admin: account.props === 'ALL', properties, updated: data.updated || null }, 200);
+    }
+
+    return portalJson({ error: 'Not found' }, 404);
+  } catch (err) {
+    return portalJson({ error: 'Server error' }, 500);
+  }
+}
+
+// One upcoming stay, with an estimated owner net when a price is known.
+function portalBooking(ev, cfg) {
+  const nights = Math.round((Date.parse(ev.e) - Date.parse(ev.s)) / 86400000);
+  const first = String(ev.n || '').trim().split(/\s+/)[0] || ''; // first name only
+  const out = { s: ev.s, e: ev.e, nights, guest: first, pf: ev.pf || 'Direct' };
+  const f = ev.fin;
+  if (f && f.promo) out.promo = f.promo;
+  if (f && (f.price || f.payout)) {
+    const cleaning = f.cleaning != null ? f.cleaning : (cfg.cleaning || 0);
+    const total = f.price || f.payout;
+    const fee = f.payout ? (f.price ? f.price - f.payout : 0)
+              : (f.fee != null ? f.fee : total * (PORTAL_PLATFORM_RATE[out.pf] || 0));
+    const rent = Math.max(0, total - cleaning);
+    const hbs = rent * PORTAL_HBS_RATE;
+    const net = total - fee - hbs - cleaning;
+    out.total = portalRound(total);
+    out.net = portalRound(net);
+  }
+  return out;
+}
+
+function portalRound(n) { return Math.round(n * 100) / 100; }
+
+// ── Sessions ────────────────────────────────────────────────────────────────
+async function portalHmacKey(env) {
+  return crypto.subtle.importKey('raw', new TextEncoder().encode(env.PORTAL_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign', 'verify']);
+}
+
+function portalB64url(bytes) {
+  let s = ''; for (const b of new Uint8Array(bytes)) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function portalFromB64url(str) {
+  str = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (str.length % 4) str += '=';
+  return Uint8Array.from(atob(str), c => c.charCodeAt(0));
+}
+
+async function portalSign(env, payload) {
+  const body = portalB64url(new TextEncoder().encode(JSON.stringify(payload)));
+  const sig = await crypto.subtle.sign('HMAC', await portalHmacKey(env), new TextEncoder().encode(body));
+  return body + '.' + portalB64url(sig);
+}
+
+async function portalSession(request, env) {
+  const cookie = request.headers.get('Cookie') || '';
+  const m = cookie.match(new RegExp('(?:^|;\\s*)' + PORTAL_COOKIE + '=([^;]+)'));
+  if (!m) return null;
+  const [body, sig] = m[1].split('.');
+  if (!body || !sig) return null;
+  try {
+    const valid = await crypto.subtle.verify('HMAC', await portalHmacKey(env),
+      portalFromB64url(sig), new TextEncoder().encode(body));
+    if (!valid) return null;
+    const payload = JSON.parse(new TextDecoder().decode(portalFromB64url(body)));
+    if (!payload.exp || payload.exp < Date.now()) return null;
+    return payload;
+  } catch (e) { return null; }
+}
+
+// ── Passwords: "pbkdf2$<iterations>$<salt b64>$<hash b64>" ───────────────────
+async function portalVerifyPassword(password, stored) {
+  const parts = String(stored).split('$');
+  if (parts.length !== 4 || parts[0] !== 'pbkdf2') return false;
+  const iter = parseInt(parts[1], 10);
+  const salt = Uint8Array.from(atob(parts[2]), c => c.charCodeAt(0));
+  const expected = Uint8Array.from(atob(parts[3]), c => c.charCodeAt(0));
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveBits']);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits(
+    { name: 'PBKDF2', salt, iterations: iter, hash: 'SHA-256' }, key, expected.length * 8));
+  if (bits.length !== expected.length) return false;
+  let diff = 0;
+  for (let i = 0; i < bits.length; i++) diff |= bits[i] ^ expected[i];
+  return diff === 0;
+}
+
+function portalJson(obj, status, extra) {
+  return new Response(JSON.stringify(obj), {
+    status,
+    headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', ...(extra || {}) },
+  });
+}
+
+// ── Price fields of an HBS Sync event DESCRIPTION ───────────────────────────
+//   price: <booking amount USD, excl. guest service fees>   fee: <platform commission USD>
+//   payout: <host payout USD>   cleaning: <cleaning fee USD>   promo: <discount, e.g. -10% early booking>
+function calSyncFin(description) {
+  if (!description) return null;
+  const fin = {};
+  for (const raw of description.split(/\\n|\n/)) {
+    const line = raw.replace(/\\,/g, ',').replace(/\;/g, ';').trim();
+    const m = line.match(/^(price|fee|payout|cleaning|ref|promo)\s*:\s*(.+)$/i);
+    if (!m) continue;
+    const k = m[1].toLowerCase();
+    if (k === 'ref') { fin.ref = m[2].trim().slice(0, 40); continue; }
+    if (k === 'promo') { fin.promo = m[2].trim().slice(0, 40); continue; }
+    const v = parseFloat(m[2].replace(/[^0-9.\-]/g, ''));
+    if (isFinite(v) && v >= 0) fin[k] = v;
+  }
+  return (fin.price || fin.payout || fin.promo) ? fin : null;
+}
+
+// Remove price data before anything leaves through the public calendar API.
+function calStripFin(data) {
+  (data.properties || []).forEach(p => (p.events || []).forEach(ev => { delete ev.fin; }));
+  return data;
 }
