@@ -897,15 +897,21 @@ function portalBooking(ev, cfg) {
   const out = { s: ev.s, e: ev.e, nights, guest: first, pf: ev.pf || 'Direct' };
   const f = ev.fin;
   if (f && f.promo) out.promo = f.promo;
-  if (f && (f.price || f.payout)) {
+  if (f && (f.received || f.price || f.payout)) {
+    // Owner net = what HBS hands back to the owner:
+    //   amount actually received from the platform − cleaning − 15% HBS (on rent excl. cleaning).
+    // Received: explicit "received:" line, else Airbnb/VRBO payout (price − platform fee),
+    // else Booking/Direct price (Booking pays the full amount; its commission is not deducted here).
     const cleaning = f.cleaning != null ? f.cleaning : (cfg.cleaning || 0);
-    const total = f.price || f.payout;
-    const fee = f.payout ? (f.price ? f.price - f.payout : 0)
-              : (f.fee != null ? f.fee : total * (PORTAL_PLATFORM_RATE[out.pf] || 0));
-    const rent = Math.max(0, total - cleaning);
-    const hbs = rent * PORTAL_HBS_RATE;
-    const net = total - fee - hbs - cleaning;
-    out.total = portalRound(total);
+    let received;
+    if (f.received != null) received = f.received;
+    else if (f.payout != null) received = f.payout;
+    else if (out.pf === 'Airbnb' || out.pf === 'VRBO') {
+      received = f.price - (f.fee != null ? f.fee : f.price * (PORTAL_PLATFORM_RATE[out.pf] || 0));
+    } else received = f.price;
+    const rent = Math.max(0, (f.price || received) - cleaning);
+    const net = received - cleaning - rent * PORTAL_HBS_RATE;
+    out.total = portalRound(received);
     out.net = portalRound(net);
   }
   return out;
@@ -983,7 +989,7 @@ function calSyncFin(description) {
   const fin = {};
   for (const raw of description.split(/\\n|\n/)) {
     const line = raw.replace(/\\,/g, ',').replace(/\;/g, ';').trim();
-    const m = line.match(/^(price|fee|payout|cleaning|ref|promo)\s*:\s*(.+)$/i);
+    const m = line.match(/^(price|fee|payout|received|cleaning|ref|promo)\s*:\s*(.+)$/i);
     if (!m) continue;
     const k = m[1].toLowerCase();
     if (k === 'ref') { fin.ref = m[2].trim().slice(0, 40); continue; }
@@ -991,7 +997,7 @@ function calSyncFin(description) {
     const v = parseFloat(m[2].replace(/[^0-9.\-]/g, ''));
     if (isFinite(v) && v >= 0) fin[k] = v;
   }
-  return (fin.price || fin.payout || fin.promo) ? fin : null;
+  return (fin.price || fin.payout || fin.received || fin.promo) ? fin : null;
 }
 
 // Remove price data before anything leaves through the public calendar API.
