@@ -140,12 +140,12 @@
           <div class="table-wrap">
             <table>
               <thead>
-                <tr><th>Check-in</th><th class="hide-sm">Check-out</th><th class="num hide-sm">Nights</th><th class="hide-sm">Guest</th><th class="hide-sm">Platform</th><th class="num hide-sm">Discount</th><th class="num">Amount received</th><th class="num">Est. owner net</th></tr>
+                <tr><th>Check-in</th><th class="hide-sm">Check-out</th><th class="num hide-sm">Nights</th><th class="hide-sm">Guest</th><th class="hide-sm">Platform</th><th class="num hide-sm">Discount</th><th class="num hide-sm">Guest paid</th><th class="num">Amount received</th><th class="num">Est. owner net</th></tr>
               </thead>
               <tbody id="bookingsBody"></tbody>
             </table>
           </div>
-          <p class="note">Discount = promotion applied to that booking (e.g. early booking, last minute, new listing). Booking total = amount received from the platform. Estimated owner net = amount received − cleaning − HBS management fee (15% of rent excl. cleaning). Final figures are confirmed in your monthly report. “—” means the amount is not available yet.</p>
+          <p class="note">Guest paid = total paid by the guest. Discount = promotion applied to that booking (e.g. early booking, last minute, new listing). Booking total = amount received from the platform. Estimated owner net = (amount received − cleaning) − HBS management fee of 15%. Final figures are confirmed in your monthly report. “—” means the amount is not available yet.</p>
         </div>
 
 
@@ -272,22 +272,22 @@
     function renderBookings() {
       const tb = $('bookingsBody');
       const list = current.bookings;
-      if (!list.length) { tb.innerHTML = '<tr><td colspan="8" class="empty-row">No upcoming bookings yet.</td></tr>'; return; }
-      let html = '', month = null, mTotal = 0, mNet = 0, gTotal = 0, gNet = 0, mHas = false;
+      if (!list.length) { tb.innerHTML = '<tr><td colspan="9" class="empty-row">No upcoming bookings yet.</td></tr>'; return; }
+      let html = '', month = null, mTotal = 0, mNet = 0, mPaid = 0, gTotal = 0, gNet = 0, gPaid = 0, mHas = false;
       const flush = () => {
         if (month === null) return;
-        html += '<tr class="month-total"><td>' + month + '</td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="num">' + (mHas ? money(mTotal) : '—') + '</td><td class="num">' + (mHas ? money(mNet) : '—') + '</td></tr>';
+        html += '<tr class="month-total"><td>' + month + '</td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="num hide-sm">' + (mHas ? money(mPaid) : '—') + '</td><td class="num">' + (mHas ? money(mTotal) : '—') + '</td><td class="num">' + (mHas ? money(mNet) : '—') + '</td></tr>';
       };
       list.forEach(b => {
         const [y, m] = b.s.split('-').map(Number);
         const key = MONTHS[m - 1] + ' ' + y;
-        if (key !== month) { flush(); month = key; mTotal = 0; mNet = 0; mHas = false; }
-        if (b.total != null) { mTotal += b.total; mNet += b.net; gTotal += b.total; gNet += b.net; mHas = true; }
+        if (key !== month) { flush(); month = key; mTotal = 0; mNet = 0; mPaid = 0; mHas = false; }
+        if (b.total != null) { mTotal += b.total; mNet += b.net; mPaid += (b.paid || 0); gTotal += b.total; gNet += b.net; gPaid += (b.paid || 0); mHas = true; }
         html += '<tr><td>' + fmtDate(b.s) + '</td><td class="hide-sm">' + fmtDate(b.e) + '</td><td class="num hide-sm">' + b.nights + '</td><td class="hide-sm">' + esc(b.guest || '—') +
-                '</td><td class="hide-sm"><span class="pf">' + esc(b.pf) + '</span></td><td class="num hide-sm">' + (b.promo ? '<span class="promo">' + esc(b.promo) + '</span>' : '—') + '</td><td class="num">' + money(b.total) + '</td><td class="num net">' + money(b.net) + '</td></tr>';
+                '</td><td class="hide-sm"><span class="pf">' + esc(b.pf) + '</span></td><td class="num hide-sm">' + (b.promo ? '<span class="promo">' + esc(b.promo) + '</span>' : '—') + '</td><td class="num hide-sm">' + money(b.paid) + '</td><td class="num">' + money(b.total) + '</td><td class="num net">' + money(b.net) + '</td></tr>';
       });
       flush();
-      html += '<tr class="grand-total"><td>Total upcoming</td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="num">' + money(gTotal) + '</td><td class="num net">' + money(gNet) + '</td></tr>';
+      html += '<tr class="grand-total"><td>Total upcoming</td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="hide-sm"></td><td class="num hide-sm">' + money(gPaid) + '</td><td class="num">' + money(gTotal) + '</td><td class="num net">' + money(gNet) + '</td></tr>';
       tb.innerHTML = html;
     }
 
