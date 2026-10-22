@@ -450,6 +450,8 @@ const CAL_PROPS = [
       {s:'2026-06-03',e:'2026-06-16',t:'block'} ] },
   { name:'SOLARA SUITE', bg:'#7FD9E0', fg:'#04343B',
     seed:[] },
+  { name:'ARUBA BREEZE C7', bg:'#F6D58E', fg:'#4A3604',
+    seed:[] },
   { name:'TROPICAL HOUSE', bg:'#F0997B', fg:'#4A1B0C',
     seed:[
       {s:'2026-02-18',e:'2026-03-11',t:'block'},
@@ -484,8 +486,13 @@ const CAL_PROPS = [
 
 // Feed URLs come from the encrypted CAL_FEEDS secret (never committed to git).
 function calFeeds(env) {
-  try { return env.CAL_FEEDS ? JSON.parse(env.CAL_FEEDS) : {}; }
-  catch (e) { return {}; }
+  // CAL_FEEDS = original map; CAL_FEEDS_2 = extra properties added later
+  // (kept separate so adding a property never overwrites the existing secret).
+  const parse = v => { try { return v ? JSON.parse(v) : {}; } catch (e) { return {}; } };
+  const a = parse(env.CAL_FEEDS), b = parse(env.CAL_FEEDS_2);
+  const out = { ...a };
+  for (const k of Object.keys(b)) out[k] = [...(out[k] || []), ...(b[k] || [])];
+  return out;
 }
 
 async function calGetData(env, force) {
