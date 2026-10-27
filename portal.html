@@ -49,6 +49,7 @@
     .cal-day.empty { background: transparent; }
     .cal-day.past { color: #B9B6C0; }
     .cal-day.booked { background: var(--ocean); color: #fff; font-weight: 600; }
+    .cal-day.blocked { background: repeating-linear-gradient(45deg, #D5DBE1, #D5DBE1 3px, #E9EDF1 3px, #E9EDF1 6px); color: #7A8794; }
     .cal-day.today { outline: 2px solid var(--gold); outline-offset: -2px; }
     .legend { display: flex; gap: 16px; margin-top: 14px; font-size: .78rem; color: var(--ink-soft); }
     .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
@@ -128,7 +129,7 @@
             </div>
           </div>
           <div class="cal-months" id="calMonths"></div>
-          <div class="legend"><span><i style="background:var(--ocean)"></i>Booked night</span><span><i style="background:#F6F8FA;border:1px solid var(--line)"></i>Available</span></div>
+          <div class="legend"><span><i style="background:var(--ocean)"></i>Booked night</span><span><i style="background:repeating-linear-gradient(45deg,#D5DBE1,#D5DBE1 3px,#E9EDF1 3px,#E9EDF1 6px)"></i>Blocked</span><span><i style="background:#F6F8FA;border:1px solid var(--line)"></i>Available</span></div>
         </div>
 
         <!-- Upcoming bookings + projected earnings -->
@@ -237,12 +238,14 @@
     }
 
     function renderCalendar() {
-      const booked = new Set();
-      current.bookings.forEach(b => {
+      const booked = new Set(), blocked = new Set();
+      const fill = (set, b) => {
         for (let d = new Date(b.s + 'T12:00:00'); d < new Date(b.e + 'T12:00:00'); d.setDate(d.getDate() + 1)) {
-          booked.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+          set.add(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
         }
-      });
+      };
+      current.bookings.forEach(b => fill(booked, b));
+      (current.blocks || []).forEach(b => fill(blocked, b));
       const today = todayIso();
       const now = new Date();
       let html = '';
@@ -257,7 +260,7 @@
         for (let d = 1; d <= days; d++) {
           const iso = y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
           const cls = ['cal-day'];
-          if (booked.has(iso)) cls.push('booked'); else if (iso < today) cls.push('past');
+          if (booked.has(iso)) cls.push('booked'); else if (blocked.has(iso)) cls.push('blocked'); else if (iso < today) cls.push('past');
           if (iso === today) cls.push('today');
           html += '<div class="' + cls.join(' ') + '">' + d + '</div>';
         }

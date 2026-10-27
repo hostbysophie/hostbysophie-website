@@ -888,9 +888,13 @@ async function portalHandle(request, env, url) {
           .filter(ev => ev.t === 'res' && ev.e > today)
           .sort((a, b) => (a.s < b.s ? -1 : 1))
           .map(ev => portalBooking(ev, cfg));
+        // Blocked dates (owner stays, closed periods) — dates only, no details
+        const blocks = (p.events || [])
+          .filter(ev => ev.t !== 'res' && ev.e > today)
+          .map(ev => ({ s: ev.s, e: ev.e }));
         return {
           name, label: cfg.label, color: p.bg || '#1A4A6B',
-          bookings,
+          bookings, blocks,
           extras: (PORTAL_EXTRAS[name] || []).filter(x => x && x.label),
         };
       });
