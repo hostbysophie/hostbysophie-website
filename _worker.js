@@ -796,7 +796,7 @@ function calJson(obj, status) {
 const PORTAL_COOKIE = 'hbs_portal';
 const PORTAL_SESSION_DAYS = 7;
 const PORTAL_MAX_FAILS = 8;
-const PORTAL_HBS_RATE = 0.15; // HBS commission, on rent excluding cleaning
+const PORTAL_HBS_RATE = 0.15; // default HBS commission, on rent excluding cleaning (override per property with `hbs`)
 
 // Platform commission used when the exact fee is not known
 const PORTAL_PLATFORM_RATE = { Airbnb: 0.155, VRBO: 0.16, Booking: 0.17, Direct: 0 };
@@ -806,6 +806,7 @@ const PORTAL_PROPS = {
   'SWEET CHALET': { label: 'Sweet Chalet — San Fuego 28R', cleaning: 75 },
   'BUBALI 13 L':  { label: 'Bubali 13L',                   cleaning: 80 },
   'SOLARA SUITE': { label: 'Solara Suite',                 cleaning: 80 },
+  'ARUBA BREEZE C7': { label: 'Aruba Breeze C7',             cleaning: 150, hbs: 0.25 },
 };
 
 // Accounts (no secrets here — passwords are in PORTAL_USERS)
@@ -815,6 +816,8 @@ const PORTAL_ACCOUNTS = {
   'richicarrental@gmail.com':     { name: 'Richi',    props: ['BUBALI 13 L'] },
   'ivettelara_mx@yahoo.com.mx':   { name: 'Ivette & Jérôme', props: ['SOLARA SUITE'] },
   'jerome.luciani@hilton.com':    { name: 'Ivette & Jérôme', props: ['SOLARA SUITE'] },
+  'blaflamme44@gmail.com':        { name: 'Brooke & Attila', props: ['ARUBA BREEZE C7'] },
+  'attila@bergou.email':          { name: 'Brooke & Attila', props: ['ARUBA BREEZE C7'] },
 };
 
 // Promotions & extras shown under the bookings table (hidden when empty).
@@ -823,6 +826,7 @@ const PORTAL_EXTRAS = {
   'SWEET CHALET': [],
   'BUBALI 13 L':  [],
   'SOLARA SUITE': [],
+  'ARUBA BREEZE C7': [],
 };
 
 async function portalHandle(request, env, url) {
@@ -845,6 +849,8 @@ async function portalHandle(request, env, url) {
       const password = String(body.password || '');
       let users = {};
       try { users = JSON.parse(env.PORTAL_USERS); } catch (e) { /* misconfigured */ }
+      // PORTAL_USERS_2 = accounts added later (kept separate so the original secret is never overwritten)
+      try { if (env.PORTAL_USERS_2) users = { ...users, ...JSON.parse(env.PORTAL_USERS_2) }; } catch (e) { /* misconfigured */ }
 
       const ok = !!PORTAL_ACCOUNTS[email] && !!users[email] && password.length > 0 &&
                  await portalVerifyPassword(password, users[email]);
@@ -918,7 +924,7 @@ function portalBooking(ev, cfg) {
       received = f.price - (f.fee != null ? f.fee : f.price * (PORTAL_PLATFORM_RATE[out.pf] || 0));
     } else received = f.price;
     // HBS 15% is taken on what remains after the cleaning cost
-    const net = (received - cleaning) * (1 - PORTAL_HBS_RATE);
+    const net = (received - cleaning) * (1 - (cfg.hbs != null ? cfg.hbs : PORTAL_HBS_RATE));
     // What the guest paid in total (Booking: Total price; VRBO: "Paiement total du voyageur")
     const paid = f.paid != null ? f.paid : (out.pf === 'Booking' && f.received != null ? f.received : (f.price || received));
     out.paid = portalRound(paid);
